@@ -188,9 +188,6 @@ Android CI workflow runs here:
 Once you've downloaded the APK, install it using ADB like described above, or
 using any of the usual techniques for installing APKs on an Android device.
 
-The builds on Github do not include the aircraft databases, you will need
-to build the app's APK yourself as described above if you want that feature.
-
 # Using the Nexus app
 
 **Nexus** is a variation of the original **Radenso Nexus** app. It primarily
