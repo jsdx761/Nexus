@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/ds1DeviceItemText"
+    android:layout_width="match_parent"
+    android:layout_height="72dp"
+    android:paddingTop="24dp"
+    android:paddingBottom="15dp"
+    android:paddingLeft="24dp"
+    android:paddingRight="24dp"
+    android:background="#2C2323"
+    android:screenOrientation="portrait" />

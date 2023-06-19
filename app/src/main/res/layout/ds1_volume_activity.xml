@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:screenOrientation="portrait">
+
+    <TextView
+        android:id="@+id/ds1ConnectedText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="12dp"
+        android:textSize="16sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <SeekBar
+        android:id="@+id/ds1VolumeSeekBar"
+        android:layout_width="0dp"
+        android:layout_height="23dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="24dp"
+        android:layout_marginEnd="24dp"
+        android:max="9"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/ds1ConnectedText" />
+
+    <Button
+        android:id="@+id/ds1VolumeMinus"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_marginTop="8dp"
+        android:onClick="onMinus"
+        android:text="-"
+        app:layout_constraintStart_toStartOf="@+id/ds1VolumeSeekBar"
+        app:layout_constraintTop_toBottomOf="@+id/ds1VolumeSeekBar" />
+
+    <Button
+        android:id="@+id/ds1VolumePlus"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+
+        android:layout_marginTop="8dp"
+        android:onClick="onPlus"
+        android:text="+"
+        app:layout_constraintEnd_toEndOf="@+id/ds1VolumeSeekBar"
+        app:layout_constraintTop_toBottomOf="@+id/ds1VolumeSeekBar" />
+
+    <TextView
+        android:id="@+id/ds1VolumeText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Volume"
+        app:layout_constraintEnd_toEndOf="@+id/ds1VolumeSeekBar"
+        app:layout_constraintStart_toStartOf="@+id/ds1VolumeSeekBar"
+        app:layout_constraintTop_toTopOf="@+id/ds1VolumeMinus" />
+</androidx.constraintlayout.widget.ConstraintLayout>

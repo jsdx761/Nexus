@@ -1,13 +1,18 @@
 <resources>
-    <string name="app_name">Radenso Nexus</string>
-    <string name="title_activity_theia_setting">TheiaSettingActivity</string>
+    <string name="app_name">Nexus</string>
     <!--
     This string is used for square devices and overridden by hello_world in
     values-round/strings.xml for round devices.
     -->
-    <string name="hello_world">Hello Square World!</string>
-    <string name="preference_file_key">RadensoNexusPreferences</string>
-    <string name="key_autoconnect">RadensoNexusAutoconnect</string>
-    <string name="key_autoconnect_address">RadensoNexusAutoconnectAddress</string>
-    <string name="key_alert_bg">RadensoNexusAlertBG</string>
+    <string name="preference_file_key">NexusPreferences</string>
+    <string name="key_autoconnect">NexusAutoconnect</string>
+    <string name="key_autoconnect_address">NexusAutoconnectAddress</string>
+    <string name="key_reports_url">NexusReportsURL</string>
+    <string name="default_reports_url">https://www.example.com</string>
+    <string name="key_aircrafts_url">NexusAircraftsURL</string>
+    <string name="default_aircrafts_url">https://www.example.com</string>
+    <string name="key_aircrafts_user">NexusAircraftsUser</string>
+    <string name="default_aircrafts_user">user</string>
+    <string name="key_aircrafts_password">NexusAircraftsPassword</string>
+    <string name="default_aircrafts_password">password</string>
 </resources>

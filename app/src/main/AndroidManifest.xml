@@ -1,26 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.noLimits.TheiaNexus">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.WAKE_LOCK" />
-
-
-    <uses-permission
-        android:name="android.permission.BLUETOOTH_SCAN"
-        android:usesPermissionFlags="neverForLocation" />
-
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
-
-
-    <uses-permission
-        android:name="android.permission.BLUETOOTH"
-        android:maxSdkVersion="30" />
-    <uses-permission
-        android:name="android.permission.BLUETOOTH_ADMIN"
-        android:maxSdkVersion="30" />
-    <uses-permission
-        android:name="android.permission.ACCESS_FINE_LOCATION" />
-
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <uses-permission android:name="android.permission.BROADCAST_STICKY" />
 
     <uses-feature
         android:name="android.hardware.bluetooth_le"
@@ -31,280 +24,46 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
-        android:supportsRtl="true"
         android:screenOrientation="portrait"
-        android:theme="@style/Theme.TheiaNexus">
-
-
-
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Nexus">
+        <service
+            android:name="com.jsd.x761.nexus.SpeechService"
+            android:enabled="true"
+            android:exported="false"></service>
+        <service
+            android:name="com.nolimits.ds1library.ExtendedDS1Service"
+            android:enabled="true"
+            android:exported="false"></service>
         <activity
-            android:name=".TheiaSettingActivity"
-            android:label="@string/title_activity_theia_setting"
+            android:name="com.jsd.x761.nexus.SplashActivity"
+            android:exported="true"
             android:screenOrientation="portrait">
-        </activity>
-
-
-        <activity android:name=".TheiaSettingColor"
-            android:screenOrientation="portrait">
-
-        </activity>
-
-        <activity android:name=".TheiaActionActivity"
-            android:screenOrientation="portrait">
-        </activity>
-
-        <activity android:name=".DS1ActionACtivity"
-            android:screenOrientation="portrait">
-        </activity>
-
-        <activity android:name=".DS1Menu"
-            android:screenOrientation="portrait">
-        </activity>
-
-        <activity android:name=".DS1MenuBand"
-            android:screenOrientation="portrait">
-        </activity>
-        <activity android:name=".DS1MenuDisplay"
-            android:screenOrientation="portrait">
-        </activity>
-        <activity android:name=".DS1MenuGPS"
-            android:screenOrientation="portrait">
-        </activity>
-        <activity android:name=".DS1MenuTone"
-            android:screenOrientation="portrait">
-        </activity>
-        <activity android:name=".DS1MenuUnit"
-            android:screenOrientation="portrait">
-        </activity>
-        <activity android:name=".DS1MenuUserPref"
-            android:screenOrientation="portrait">
-        </activity>
-
-        <activity android:name=".DS1Tone"
-            android:screenOrientation="portrait">
-        </activity>
-
-        <activity android:name=".DS1ToneK"
-            android:screenOrientation="portrait">
-        </activity>
-
-        <activity android:name=".DS1ToneKa"
-            android:screenOrientation="portrait">
-        </activity>
-
-        <activity android:name=".DS1AutoSpeed"
-            android:screenOrientation="portrait">
-        </activity>
-
-        <activity android:name=".DS1ToneLaser"
-            android:screenOrientation="portrait">
-        </activity>
-
-        <activity android:name=".DS1ToneMRCD"
-            android:screenOrientation="portrait">
-        </activity>
-
-        <activity android:name=".DS1ToneX"
-            android:screenOrientation="portrait">
-        </activity>
-
-        <activity android:name=".DS1Filter"
-            android:screenOrientation="portrait">
-        </activity>
-
-        <activity android:name=".DS1Color"
-            android:screenOrientation="portrait">
-        </activity>
-
-        <activity android:name=".DS1ColorK"
-            android:screenOrientation="portrait">
-        </activity>
-
-        <activity android:name=".DS1ColorKa"
-            android:screenOrientation="portrait">
-        </activity>
-
-        <activity android:name=".DS1ColorLaser"
-            android:screenOrientation="portrait">
-        </activity>
-
-        <activity android:name=".DS1ColorMRCD"
-            android:screenOrientation="portrait">
-        </activity>
-
-        <activity android:name=".DS1ColorX"
-            android:screenOrientation="portrait">
-        </activity>
-
-        <activity android:name=".DS1Brightness"
-            android:screenOrientation="portrait">
-        </activity>
-
-        <activity android:name=".DS1FreqDisp"
-            android:screenOrientation="portrait">
-        </activity>
-
-        <activity android:name=".DS1Volume"
-            android:screenOrientation="portrait">
-        </activity>
-
-        <activity android:name=".DS1Disconnect"
-            android:screenOrientation="portrait">
-        </activity>
-
-        <activity android:name=".DS1Subs"
-            android:screenOrientation="portrait">
-        </activity>
-
-        <activity android:name=".DS1Idle"
-            android:screenOrientation="portrait">
-        </activity>
-
-        <activity android:name=".DS1GPS"
-            android:screenOrientation="portrait">
-        </activity>
-
-        <activity android:name=".DS1GPSPoints"
-            android:screenOrientation="portrait">
-        </activity>
-
-        <activity android:name=".DS1Region"
-            android:screenOrientation="portrait">
-        </activity>
-
-        <activity android:name=".DS1Power"
-            android:screenOrientation="portrait">
-        </activity>
-
-        <activity android:name=".DS1AutoMute"
-            android:screenOrientation="portrait">
-        </activity>
-
-        <activity android:name=".DS1Time"
-            android:screenOrientation="portrait">
-        </activity>
-
-        <activity android:name=".DS1Unit"
-            android:screenOrientation="portrait">
-        </activity>
-
-        <activity android:name=".DS1cam"
-            android:screenOrientation="portrait">
-        </activity>
-
-        <activity android:name=".DS1KNotch"
-            android:screenOrientation="portrait">
-        </activity>
-        <activity android:name=".DS1AlertPriority"
-            android:screenOrientation="portrait">
-        </activity>
-        <activity android:name=".DS1MRCDMute"
-            android:screenOrientation="portrait">
-        </activity>
-        <activity android:name=".DS1BogeyTone"
-            android:screenOrientation="portrait">
-        </activity>
-        <activity android:name=".DS1MenuSettings"
-            android:screenOrientation="portrait">
-        </activity>
-        <activity android:name=".DS1KaFreqVoice"
-            android:screenOrientation="portrait">
-        </activity>
-
-
-
-        <activity android:name=".DS1Mode"
-            android:screenOrientation="portrait">
-        </activity>
-
-        <activity android:name=".DS1_LowSpeedMute"
-            android:screenOrientation="portrait">
-        </activity>
-
-        <activity android:name=".DS1OverSpeedWarning"
-            android:screenOrientation="portrait">
-        </activity>
-
-        <activity android:name=".DS1Channels"
-            android:screenOrientation="portrait">
-        </activity>
-
-        <activity android:name=".DS1UpdateTest"
-            android:screenOrientation="portrait">
-        </activity>
-
-        <activity android:name=".DS1ServiceActionACtivity"
-            android:screenOrientation="portrait">
-        </activity>
-
-        <activity android:name=".TheiaServiceGenericActionActivity"
-            android:screenOrientation="portrait">
-
-        </activity>
-
-        <activity android:name=".TheiaStatusAlerts"
-            android:screenOrientation="portrait">
-        </activity>
-
-        <activity android:name=".TheiaAlertAction"
-            android:screenOrientation="portrait">
-        </activity>
-
-        <activity android:name=".TheiaDisconnect"
-            android:screenOrientation="portrait">
-        </activity>
-
-        <activity android:name=".TheiaMenu"
-            android:screenOrientation="portrait">
-        </activity>
-
-        <activity android:name=".TheiaMenuDisplay"
-            android:screenOrientation="portrait">
-        </activity>
-
-        <activity android:name=".TheiaMenuAlert"
-            android:screenOrientation="portrait">
-        </activity>
-
-        <activity android:name=".TheiaMenuUser"
-            android:screenOrientation="portrait">
-        </activity>
-
-        <activity android:name=".TheiaMenuGPS"
-            android:screenOrientation="portrait">
-        </activity>
-
-        <activity android:name=".DS1StatusAlerts"
-            android:screenOrientation="portrait">
-        </activity>
-
-        <activity android:name=".TheiaMenuUnit"
-            android:screenOrientation="portrait">
-        </activity>
-
-        <activity android:name=".SplashActivity"
-            android:screenOrientation="portrait"
-            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <activity android:name=".TheiaScanActivity"
-            android:screenOrientation="portrait">
-
-
-
-        </activity>
-
-
-
-        <service
-            android:name=".TheiaService"
-            android:enabled="true"
-            android:exported="false"></service>
-
+        <activity
+            android:name="com.jsd.x761.nexus.MainMenuActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name="com.jsd.x761.nexus.ThreatsActivity"
+            android:exported="true"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name="com.jsd.x761.nexus.ReportsPrefActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name="com.jsd.x761.nexus.AircraftsPrefActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name="com.jsd.x761.nexus.DS1ScanActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name="com.jsd.x761.nexus.DS1VolumeActivity"
+            android:screenOrientation="portrait" />
     </application>
 
 </manifest>

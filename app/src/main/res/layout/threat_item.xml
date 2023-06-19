@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="72dp"
+    android:paddingLeft="24dp"
+    android:paddingRight="24dp"
+    android:layout_marginBottom="5dp"
+    android:background="#2C2323"
+    android:screenOrientation="portrait">
+
+
+    <TextView
+        android:id="@+id/frequencyOrDistanceText"
+        android:layout_width="85dp"
+        android:layout_height="20dp"
+        android:layout_marginTop="8dp"
+        android:text="100.345 GHz"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ProgressBar
+        android:id="@+id/strengthProgressBar"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="160dp"
+        android:layout_height="20dp"
+        android:layout_marginStart="24dp"
+        app:layout_constraintBottom_toBottomOf="@+id/frequencyOrDistanceText"
+        app:layout_constraintStart_toEndOf="@+id/frequencyOrDistanceText"
+        app:layout_constraintTop_toTopOf="@+id/frequencyOrDistanceText" />
+
+    <TextView
+        android:id="@+id/typeText"
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Radar"
+        android:ellipsize="end"
+        android:singleLine="true"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/frequencyOrDistanceText" />
+
+    <TextView
+        android:id="@+id/bandOrLocationText"
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:layout_marginStart="114dp"
+        android:ellipsize="end"
+        android:singleLine="true"
+        android:text="X"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/typeText"
+        app:layout_constraintTop_toTopOf="@+id/typeText" />
+
+    <TextView
+        android:id="@+id/bearingText"
+        android:layout_width="wrap_content"
+        android:layout_height="20dp"
+        android:layout_marginStart="24dp"
+        android:text="Front"
+        app:layout_constraintStart_toEndOf="@+id/strengthProgressBar"
+        app:layout_constraintTop_toTopOf="@+id/strengthProgressBar" />
+
+    <androidx.constraintlayout.widget.Barrier
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="#E82727"
+        app:barrierDirection="top"
+        tools:layout_editor_absoluteX="406dp"
+        tools:layout_editor_absoluteY="67dp" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
