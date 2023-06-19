@@ -3,7 +3,7 @@
 A fork of the **Radenso Nexus** Android app at
 [https://github.com/nolimits-enterprises/RadensoNexus](https://github.com/nolimits-enterprises/RadensoNexus).
 
-[![Android CI](https://github.com/jsdx761/Test/actions/workflows/android.yml/badge.svg)](https://github.com/jsdx761/Test/actions/workflows/android.yml)
+[![Android CI](https://github.com/jsdx761/Nexus/actions/workflows/android.yml/badge.svg)](https://github.com/jsdx761/Nexus/actions/workflows/android.yml)
 
 # Project motivation and history
 
