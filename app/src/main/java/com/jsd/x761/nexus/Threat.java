@@ -228,7 +228,7 @@ public class Threat {
   public boolean isDuplicateReport(Threat t2) {
     // A report of the same type within a small distance is considered a
     // duplicate report
-    if(threatClass == t2.threatClass && type.equals(t2.type) && subType.equals(t2.subType)) {
+    if(threatClass == t2.threatClass && type.equals(t2.type)) {
       Location location = new Location("");
       location.setLatitude(latitude);
       location.setLongitude(longitude);
