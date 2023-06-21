@@ -62,6 +62,8 @@ public class ReportsFetchTask implements Runnable {
       }
       catch(JSONException e) {
         Log.e(TAG, "JSONException reading reports", e);
+        onDone(null);
+        return;
       }
     }
     else {
@@ -100,6 +102,7 @@ public class ReportsFetchTask implements Runnable {
         StringBuilder buffer = new StringBuilder();
         if(inputStream == null) {
           onDone(null);
+          return;
         }
 
         reader = new BufferedReader(new InputStreamReader(inputStream));
@@ -110,6 +113,7 @@ public class ReportsFetchTask implements Runnable {
 
         if(buffer.length() == 0) {
           onDone(null);
+          return;
         }
 
         String jsonString = buffer.toString();
@@ -117,6 +121,8 @@ public class ReportsFetchTask implements Runnable {
       }
       catch(IOException | JSONException e) {
         Log.e(TAG, "Exception reading JSON from URL", e);
+        onDone(null);
+        return;
       }
       finally {
         if(connection != null) {
@@ -134,9 +140,9 @@ public class ReportsFetchTask implements Runnable {
     }
 
     List<Threat> reports = new ArrayList<>();
-    if(json != null) {
-      try {
-        JSONArray jsonReports = json.getJSONArray("alerts");
+    try {
+      JSONArray jsonReports = json.optJSONArray("alerts");
+      if(jsonReports != null) {
         for(int i = 0; i < jsonReports.length(); i++) {
           JSONObject jsonReport = jsonReports.getJSONObject(i);
           try {
@@ -156,14 +162,21 @@ public class ReportsFetchTask implements Runnable {
           }
         }
       }
-      catch(JSONException e) {
-        Log.e(TAG, "JSONException processing reports", e);
-      }
+    }
+    catch(JSONException e) {
+      Log.e(TAG, "JSONException processing reports", e);
+      onDone(null);
+      return;
     }
     onDone(reports);
   }
 
   protected void onDone(List<Threat> reports) {
-    Log.i(TAG, String.format("onDone %d reports", reports.size()));
+    if(reports != null) {
+      Log.i(TAG, String.format("onDone %d reports", reports.size()));
+    }
+    else {
+      Log.i(TAG, "onDone null reports");
+    }
   }
 }

@@ -69,6 +69,8 @@ public class AircraftsFetchTask implements Runnable {
       }
       catch(JSONException e) {
         Log.e(TAG, "JSONException reading JSON", e);
+        onDone(null);
+        return;
       }
     }
     else {
@@ -114,6 +116,7 @@ public class AircraftsFetchTask implements Runnable {
         StringBuilder buffer = new StringBuilder();
         if(inputStream == null) {
           onDone(null);
+          return;
         }
 
         reader = new BufferedReader(new InputStreamReader(inputStream));
@@ -124,6 +127,7 @@ public class AircraftsFetchTask implements Runnable {
 
         if(buffer.length() == 0) {
           onDone(null);
+          return;
         }
 
         String rateLimit = connection.getHeaderField("X-Rate-Limit-Remaining");
@@ -134,6 +138,8 @@ public class AircraftsFetchTask implements Runnable {
       }
       catch(IOException | JSONException e) {
         Log.e(TAG, "Exception reading JSON from URL", e);
+        onDone(null);
+        return;
       }
       finally {
         if(connection != null) {
@@ -151,9 +157,9 @@ public class AircraftsFetchTask implements Runnable {
     }
 
     List<Threat> aircrafts = new ArrayList<>();
-    if(json != null) {
-      try {
-        JSONArray jsonAircrafts = json.getJSONArray("states");
+    try {
+      JSONArray jsonAircrafts = json.optJSONArray("states");
+      if(jsonAircrafts != null) {
         for(int i = 0; i < jsonAircrafts.length(); i++) {
           JSONArray jsonAircraft = jsonAircrafts.getJSONArray(i);
           try {
@@ -175,14 +181,21 @@ public class AircraftsFetchTask implements Runnable {
           }
         }
       }
-      catch(JSONException e) {
-        Log.e(TAG, "JSONException processing aircraft state vectors", e);
-      }
+    }
+    catch(JSONException e) {
+      Log.e(TAG, "JSONException processing aircraft state vectors", e);
+      onDone(null);
+      return;
     }
     onDone(aircrafts);
   }
 
   protected void onDone(List<Threat> aircrafts) {
-    Log.i(TAG, String.format("onDone %d aircrafts", aircrafts.size()));
+    if(aircrafts != null) {
+      Log.i(TAG, String.format("onDone %d aircrafts", aircrafts.size()));
+    }
+    else {
+      Log.i(TAG, "onDone null aircrafts");
+    }
   }
 }

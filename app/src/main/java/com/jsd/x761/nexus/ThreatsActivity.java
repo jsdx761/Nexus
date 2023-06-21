@@ -76,6 +76,7 @@ public class ThreatsActivity extends DS1ServiceActivity {
   private Executor mAircraftsFetchTaskExecutor;
   private Runnable mCheckForReportsTask;
   private String mReportsSourceURL;
+  private boolean mReportsAvailable = true;
   private Runnable mDebugBackgroundAlertsTask;
   private Runnable mDebugTestAlertsTask;
   private boolean mNetworkConnected = true;
@@ -83,6 +84,7 @@ public class ThreatsActivity extends DS1ServiceActivity {
   private AircraftsDatabase mAircraftsDatabase;
   private Runnable mCheckForAircraftsTask;
   private String mAircraftsSourceURL;
+  private boolean mAircraftsAvailable = true;
   private String mAircraftsUser;
   private String mAircraftsPassword;
 
@@ -292,62 +294,60 @@ public class ThreatsActivity extends DS1ServiceActivity {
 
   @Override
   protected void onDS1DeviceData() {
-    mHandler.postDelayed(() -> {
-      Log.i(TAG, "onDS1DeviceData");
-      List<Threat> alerts = new ArrayList<>();
-      if(mDS1Service != null && mDS1Service.isConnected()) {
-        // Collect alerts from the DS1 device
-        List<DS1Service.RD_Alert> ds1Alerts = mDS1Service.getmAlerts();
-        if(ds1Alerts != null) {
-          for(DS1Service.RD_Alert ds1Alert : ds1Alerts) {
-            if(ds1Alert.detected && !ds1Alert.muted) {
-              alerts.add(Threat.fromDS1Alert(ds1Alert));
-            }
+    Log.i(TAG, "onDS1DeviceData");
+    List<Threat> alerts = new ArrayList<>();
+    if(mDS1Service != null && mDS1Service.isConnected()) {
+      // Collect alerts from the DS1 device
+      List<DS1Service.RD_Alert> ds1Alerts = mDS1Service.getmAlerts();
+      if(ds1Alerts != null) {
+        for(DS1Service.RD_Alert ds1Alert : ds1Alerts) {
+          if(ds1Alert.detected && !ds1Alert.muted) {
+            alerts.add(Threat.fromDS1Alert(ds1Alert));
           }
         }
       }
-      if(Configuration.DEBUG_INJECT_TEST_ALERTS) {
-        // Inject test alerts to help test the app without having to
-        // use an actual DS1 device everytime
-        Log.i(TAG, "injecting test DS1 alerts");
-        DS1Service ds1Service = new DS1Service();
-        for(String alert : Configuration.DEBUG_TEST_ALERTS) {
-          alerts.add(Threat.fromDS1Alert(ds1Service.new RD_Alert(alert)));
+    }
+    if(Configuration.DEBUG_INJECT_TEST_ALERTS) {
+      // Inject test alerts to help test the app without having to
+      // use an actual DS1 device everytime
+      Log.i(TAG, "injecting test DS1 alerts");
+      DS1Service ds1Service = new DS1Service();
+      for(String alert : Configuration.DEBUG_TEST_ALERTS) {
+        alerts.add(Threat.fromDS1Alert(ds1Service.new RD_Alert(alert)));
+      }
+    }
+
+    List<Threat> newAlerts = new ArrayList<>();
+    List<Threat> mAlerts = mThreatsAdapter.getAlerts();
+    for(Threat alert : alerts) {
+      for(Threat mAlert : mAlerts) {
+        // Detect repeating alerts, reuse the existing alert instead of
+        // adding the repeated alert to avoid announcing the same alert
+        // over and over
+        if(alert.threatClass == mAlert.threatClass && alert.band == mAlert.band && alert.frequency == mAlert.frequency) {
+          mAlert.direction = alert.direction;
+          mAlert.intensity = alert.intensity;
+          Log.i(TAG, "repeating alert");
+          alert = mAlert;
+          break;
         }
       }
+      newAlerts.add(alert);
+    }
+    if(newAlerts.size() == 0) {
+      return;
+    }
 
-      List<Threat> newAlerts = new ArrayList<>();
-      List<Threat> mAlerts = mThreatsAdapter.getAlerts();
-      for(Threat alert : alerts) {
-        for(Threat mAlert : mAlerts) {
-          // Detect repeating alerts, reuse the existing alert instead of
-          // adding the repeated alert to avoid announcing the same alert
-          // over and over
-          if(alert.threatClass == mAlert.threatClass && alert.band == mAlert.band && alert.frequency == mAlert.frequency) {
-            mAlert.direction = alert.direction;
-            mAlert.intensity = alert.intensity;
-            Log.i(TAG, "repeating alert");
-            alert = mAlert;
-            break;
-          }
-        }
-        newAlerts.add(alert);
-      }
-      if(newAlerts.size() == 0) {
-        return;
-      }
+    // Sort alerts by priority
+    newAlerts.sort((o1, o2) -> o1.priority - o2.priority);
 
-      // Sort alerts by priority
-      newAlerts.sort((o1, o2) -> o1.priority - o2.priority);
-
-      // Clear alerts after a few seconds
-      if(mClearAlertsTask != null) {
-        Log.i(TAG, "removeCallbacks() mClearAlertsTask");
-        mHandler.removeCallbacks(mClearAlertsTask);
-        mClearAlertsTask = null;
-      }
-      mThreatsAdapter.setAlerts(newAlerts, () -> startClearAlertsTask());
-    }, MESSAGE_TOKEN, 1);
+    // Clear alerts after a few seconds
+    if(mClearAlertsTask != null) {
+      Log.i(TAG, "removeCallbacks() mClearAlertsTask");
+      mHandler.removeCallbacks(mClearAlertsTask);
+      mClearAlertsTask = null;
+    }
+    mThreatsAdapter.setAlerts(newAlerts, () -> startClearAlertsTask());
   }
 
   private void startClearAlertsTask() {
@@ -477,7 +477,12 @@ public class ThreatsActivity extends DS1ServiceActivity {
           ReportsFetchTask reportsFetchTask = new ReportsFetchTask(mReportsSourceURL, mLocation) {
             @Override
             protected void onDone(List<Threat> reports) {
-              Log.i(TAG, String.format("reportsFetchTask.onDone %d reports", reports.size()));
+              if(reports == null) {
+                Log.i(TAG, "reportsFetchTask.onDone null reports");
+              }
+              else {
+                Log.i(TAG, String.format("reportsFetchTask.onDone %d reports", reports.size()));
+              }
               onReportsData(reports);
             }
           };
@@ -490,11 +495,25 @@ public class ThreatsActivity extends DS1ServiceActivity {
   }
 
   protected void onReportsData(List<Threat> reports) {
-    mHandler.postDelayed(() -> {
-      if(reports.size() == 0) {
-        return;
+    if(reports == null) {
+      if(mReportsAvailable) {
+        mReportsAvailable = false;
+        mSpeechService.announceEvent("Reports are off", () -> {
+        });
       }
-
+      return;
+    }
+    else {
+      if(!mReportsAvailable) {
+        mReportsAvailable = true;
+        mSpeechService.announceEvent("Reports are back on", () -> {
+        });
+      }
+    }
+    if(reports.size() == 0) {
+      return;
+    }
+    mHandler.postDelayed(() -> {
       // Sort collected reports by priority
       reports.sort(Comparator.comparingInt(o -> o.priority));
 
@@ -513,14 +532,13 @@ public class ThreatsActivity extends DS1ServiceActivity {
         }
       }
 
-      List<Threat> newReports = new ArrayList<>();
-      List<Threat> mReports = mThreatsAdapter.getReports();
       // Announce each report once initially and then announce a reminder
       // once it gets closer
+      List<Threat> newReports = new ArrayList<>();
+      List<Threat> mReports = mThreatsAdapter.getReports();
       for(Threat report : uniqueReports) {
         for(Threat mReport : mReports) {
-          if(report.threatClass == mReport.threatClass && report.city.equals(mReport.city) && report.street.equals(mReport.street) &&
-            report.latitude == mReport.latitude && report.longitude == mReport.longitude) {
+          if(report.isSameReport(mReport)) {
             Log.i(TAG, String.format("existing report with new distance %f", report.distance));
             if(report.distance <= Configuration.REPORTS_REMINDER_DISTANCE && mReport.distance > Configuration.REPORTS_REMINDER_DISTANCE) {
               mReport.announced = 0;
@@ -554,7 +572,12 @@ public class ThreatsActivity extends DS1ServiceActivity {
             mLocation) {
             @Override
             protected void onDone(List<Threat> aircrafts) {
-              Log.i(TAG, String.format("aircraftsFetchTask.onDone %d aircraft state vectors", aircrafts.size()));
+              if(aircrafts == null) {
+                Log.i(TAG, "aircraftsFetchTask.onDone null aircraft state vectors");
+              }
+              else {
+                Log.i(TAG, String.format("aircraftsFetchTask.onDone %d aircraft state vectors", aircrafts.size()));
+              }
               onAircraftsData(aircrafts);
             }
           };
@@ -567,17 +590,32 @@ public class ThreatsActivity extends DS1ServiceActivity {
   }
 
   protected void onAircraftsData(List<Threat> aircrafts) {
-    mHandler.postDelayed(() -> {
-      if(aircrafts.size() == 0) {
-        return;
+    if(aircrafts == null) {
+      if(mAircraftsAvailable) {
+        mAircraftsAvailable = false;
+        mSpeechService.announceEvent("Aircraft recognition is off", () -> {
+        });
       }
+      return;
+    }
+    else {
+      if(!mAircraftsAvailable) {
+        mAircraftsAvailable = true;
+        mSpeechService.announceEvent("Aircraft recognition is back on", () -> {
+        });
+      }
+    }
+    if(aircrafts.size() == 0) {
+      return;
+    }
+    mHandler.postDelayed(() -> {
       List<Threat> newAircrafts = new ArrayList<>();
       List<Threat> mAircrafts = mThreatsAdapter.getAircrafts();
       // Announce each aircraft state vector once initially and then
       // announce a reminder once it gets closer
       for(Threat aircraft : aircrafts) {
         for(Threat mAircraft : mAircrafts) {
-          if(aircraft.threatClass == mAircraft.threatClass && aircraft.transponder.equals(mAircraft.transponder)) {
+          if(aircraft.isSameAircraft(mAircraft)) {
             Log.i(TAG, String.format("existing aircraft state vector with new distance %f", aircraft.distance));
             if(aircraft.distance <= Configuration.AIRCRAFTS_REMINDER_DISTANCE && mAircraft.distance > Configuration.AIRCRAFTS_REMINDER_DISTANCE) {
               mAircraft.announced = 0;
@@ -593,7 +631,7 @@ public class ThreatsActivity extends DS1ServiceActivity {
         newAircrafts.add(aircraft);
       }
 
-      // Sort aircraft vector aircrafts by priority
+      // Sort aircraft state vectors by priority
       newAircrafts.sort(Comparator.comparingInt(o -> o.priority));
 
       mThreatsAdapter.setAircrafts(newAircrafts, () -> {

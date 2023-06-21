@@ -33,6 +33,8 @@ import org.json.JSONObject;
  * report.
  */
 public class Threat {
+  private static final String TAG = "THREAT";
+
   public static final int ALERT_CLASS_RADAR = 0;
   public static final int ALERT_CLASS_LASER = 1;
   public static final int ALERT_CLASS_SPEED_CAM = 2;
@@ -53,14 +55,13 @@ public class Threat {
   public static final int ALERT_DIRECTION_SIDE = 1;
   public static final int ALERT_DIRECTION_BACK = 2;
 
-  private static final String TAG = "ALERT_ENTRY";
-
   public int threatClass = 0;
 
   public int direction = 0;
   public int band = 0;
   public float intensity = 0.0f;
   public float frequency = 0.0f;
+  public boolean muted;
 
   public String type = "";
   public String subType = "";
@@ -90,6 +91,9 @@ public class Threat {
    */
   public static Threat fromDS1Alert(DS1Service.RD_Alert ds1Alert) {
     Threat threat = new Threat();
+    Log.i(TAG, String.format(
+      "fromDS1Alert id %s type %s freq %f muted %b intensity %d raw_value %d",
+      ds1Alert.alert_id, ds1Alert.type, ds1Alert.freq, ds1Alert.muted, ds1Alert.rssi, ds1Alert.raw_value));
 
     switch(ds1Alert.alert_dir) {
       case ALERT_DIR_FRONT -> threat.direction = ALERT_DIRECTION_FRONT;
@@ -99,6 +103,7 @@ public class Threat {
 
     threat.intensity = (ds1Alert.rssi + 2) * 10;
     threat.frequency = ds1Alert.freq;
+    threat.muted = ds1Alert.muted;
 
     if(ds1Alert.type.compareTo("X") == 0) {
       threat.threatClass = ALERT_CLASS_RADAR;
@@ -162,8 +167,9 @@ public class Threat {
    * Construct a threat from a JSON object representing a crowd-sourced report.
    */
   public static Threat fromReport(Location location, JSONObject jsonReport) {
-    Threat threat = new Threat();
+    Log.i(TAG, "fromReport");
 
+    Threat threat = new Threat();
     threat.threatClass = ALERT_CLASS_REPORT;
     try {
       threat.type = jsonReport.getString("type");
@@ -198,7 +204,7 @@ public class Threat {
     }
     catch(JSONException e) {
     }
-    Log.i(TAG, String.format("vehicle location lat %f lng %f", (float)location.getLatitude(), (float)location.getLongitude()));
+    Log.i(TAG, String.format("report type %s subtype %s city %s street %s", threat.type, threat.subType, threat.city, threat.street));
     Log.i(TAG, String.format("report location lat %f lng %f", (float)threat.latitude, (float)threat.longitude));
 
     Location target = new Location(location);
@@ -208,13 +214,14 @@ public class Threat {
     // Compute the distance between the vehicle and the report
     float meters = Geospatial.getDistance(location, target);
     threat.distance = Geospatial.toMiles(meters);
+    Log.i(TAG, String.format("vehicle location lat %f lng %f", (float)location.getLatitude(), (float)location.getLongitude()));
     Log.i(TAG, String.format("report distance %f", threat.distance));
 
     // Determine the bearing to the report relative to the vehicle bearing
-    float bearing = location.hasBearing() ? location.getBearing() : 0.0f;
-    Log.i(TAG, String.format("vehicle bearing %f", bearing));
     float bearingToTarget = Geospatial.getBearing(location, target);
     Log.i(TAG, String.format("report bearing %f", bearingToTarget));
+    float bearing = location.hasBearing() ? location.getBearing() : 0.0f;
+    Log.i(TAG, String.format("vehicle bearing %f", bearing));
     float relativeBearing = Geospatial.getRelativeBearing(bearing, bearingToTarget);
     Log.i(TAG, String.format("report relative bearing %f", relativeBearing));
     threat.hour = Geospatial.toHour(relativeBearing);
@@ -241,6 +248,14 @@ public class Threat {
     return false;
   }
 
+  public boolean isSameReport(Threat t2) {
+    return threatClass == t2.threatClass && city.equals(t2.city) && street.equals(t2.street) && latitude == t2.latitude && longitude == t2.longitude;
+  }
+
+  public boolean isSameAircraft(Threat t2) {
+    return threatClass == t2.threatClass && transponder.equals(t2.transponder);
+  }
+
   public String toDebugString() {
     switch(threatClass) {
       case Threat.ALERT_CLASS_REPORT:
@@ -256,8 +271,9 @@ public class Threat {
    * Construct a threat from a JSON object representing an aircraft state vector.
    */
   public static Threat fromAircraft(Location location, JSONArray jsonAircraft, String[] aircraftInfo) {
-    Threat threat = new Threat();
+    Log.i(TAG, "fromReport");
 
+    Threat threat = new Threat();
     threat.threatClass = ALERT_CLASS_AIRCRAFT;
     try {
       threat.transponder = jsonAircraft.getString(0);
@@ -274,6 +290,7 @@ public class Threat {
     }
     catch(JSONException e) {
     }
+    Log.i(TAG, String.format("aircraft transponder %s callSign %s onGround %b", threat.transponder, threat.callSign, threat.onGround));
 
     threat.owner = "";
     threat.type = "Aircraft";
@@ -316,8 +333,8 @@ public class Threat {
       catch(JSONException e2) {
       }
     }
-    Log.i(TAG, String.format("vehicle location lat %f lng %f", (float)location.getLatitude(), (float)location.getLongitude()));
     Log.i(TAG, String.format("aircraft location lat %f lng %f altitude %f", (float)threat.latitude, (float)threat.longitude, threat.altitude));
+    Log.i(TAG, String.format("vehicle location lat %f lng %f", (float)location.getLatitude(), (float)location.getLongitude()));
 
     Location target = new Location(location);
     target.setLongitude(threat.longitude);
@@ -326,17 +343,17 @@ public class Threat {
     // Compute the distance between the vehicle and the report
     float meters = Geospatial.getDistance(location, target);
     threat.distance = Geospatial.toMiles(meters);
-    Log.i(TAG, String.format("report distance %f", threat.distance));
+    Log.i(TAG, String.format("aircraft distance %f", threat.distance));
 
     // Determine the bearing to the report relative to the vehicle bearing
+    float bearingToTarget = Geospatial.getBearing(location, target);
+    Log.i(TAG, String.format("aircraft bearing %f", bearingToTarget));
     float bearing = location.hasBearing() ? location.getBearing() : 0.0f;
     Log.i(TAG, String.format("vehicle bearing %f", bearing));
-    float bearingToTarget = Geospatial.getBearing(location, target);
-    Log.i(TAG, String.format("report bearing %f", bearingToTarget));
     float relativeBearing = Geospatial.getRelativeBearing(bearing, bearingToTarget);
-    Log.i(TAG, String.format("report relative bearing %f", relativeBearing));
+    Log.i(TAG, String.format("aircraft relative bearing %f", relativeBearing));
     threat.hour = Geospatial.toHour(relativeBearing);
-    Log.i(TAG, String.format("report relative bearing %d o'clock", threat.hour));
+    Log.i(TAG, String.format("aircraft relative bearing %d o'clock", threat.hour));
 
     // Determine the announcement priority, just use the distance for now
     threat.priority = Math.round(meters);

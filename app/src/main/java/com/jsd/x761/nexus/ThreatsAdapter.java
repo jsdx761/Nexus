@@ -212,35 +212,35 @@ public class ThreatsAdapter extends RecyclerView.Adapter<ThreatsAdapter.ViewHold
     Log.i(TAG, String.format("playThreatSound %d", pos));
     Threat threat = threats.get(pos);
 
-    String earcon = "";
+    String earcon;
     if(threat.threatClass == Threat.ALERT_CLASS_RADAR) {
-      switch(threat.band) {
-        case Threat.ALERT_BAND_X -> earcon = "[s2]";
-        case Threat.ALERT_BAND_K, Threat.ALERT_BAND_POP_K -> earcon = "[s4]";
-        case Threat.ALERT_BAND_KA -> earcon = "[s3]";
-        case Threat.ALERT_BAND_MRCD, Threat.ALERT_BAND_MRCT -> earcon = "[s5]";
-        case Threat.ALERT_BAND_GT3, Threat.ALERT_BAND_GT4 -> earcon = "[s6]";
-      }
+      earcon = switch(threat.band) {
+        case Threat.ALERT_BAND_X -> "[s2]";
+        case Threat.ALERT_BAND_K, Threat.ALERT_BAND_POP_K -> "[s4]";
+        case Threat.ALERT_BAND_KA -> "[s3]";
+        case Threat.ALERT_BAND_MRCD, Threat.ALERT_BAND_MRCT -> "[s10]";
+        case Threat.ALERT_BAND_GT3, Threat.ALERT_BAND_GT4 -> "[s6]";
+        default -> "[s6]";
+      };
     }
     else {
       earcon = switch(threat.threatClass) {
-        case Threat.ALERT_CLASS_LASER -> "[s1]";
-        case Threat.ALERT_CLASS_SPEED_CAM, Threat.ALERT_CLASS_RED_LIGHT_CAM, Threat.ALERT_CLASS_REPORT -> "[s8]";
-        case Threat.ALERT_CLASS_USER_MARK -> "[s9]";
-        case Threat.ALERT_CLASS_LOCKOUT -> "[s10]";
+        case Threat.ALERT_CLASS_LASER -> "[s5]";
+        case Threat.ALERT_CLASS_SPEED_CAM, Threat.ALERT_CLASS_RED_LIGHT_CAM -> "s10";
+        case Threat.ALERT_CLASS_REPORT -> "[s8]";
+        case Threat.ALERT_CLASS_USER_MARK, Threat.ALERT_CLASS_LOCKOUT -> "[s9]";
         case Threat.ALERT_CLASS_AIRCRAFT -> "[s7]";
-        default -> earcon;
+        default -> "[s6]";
       };
     }
 
-    Runnable nextThreatTask = () -> {
-      Log.i(TAG, "playThreatSound.onDone.run()");
-      onDone.run();
-    };
-    mHandler.postDelayed(nextThreatTask, MESSAGE_TOKEN, Configuration.AUDIO_EARCON_TIMER);
-
     if(pos < max) {
       // Play the sound indicating the class of threat on the voice call stream
+      Runnable nextThreatTask = () -> {
+        Log.i(TAG, "playThreatSound.onDone.run()");
+        onDone.run();
+      };
+      mHandler.postDelayed(nextThreatTask, MESSAGE_TOKEN, Configuration.AUDIO_EARCON_TIMER);
       mActivity.getSpeechService().playEarcon(earcon);
     }
   }
@@ -428,44 +428,46 @@ public class ThreatsAdapter extends RecyclerView.Adapter<ThreatsAdapter.ViewHold
       // announced
       List<Threat> announcements = new ArrayList<>();
       for(Threat alert : mAlerts) {
-        // alert.announced = alert.announced + 1;
-        announcements.add(alert);
+        if(!alert.muted) {
+          announcements.add(alert);
+        }
       }
+      if(announcements.size() != 0) {
+        // Optionally start an async task to proactively abandon audio focus
+        // after a few seconds
+        Runnable abandonAudioTask = null;
+        if(Configuration.ABANDON_AUDIO_TIMER != 0) {
+          abandonAudioTask = () -> {
+            Log.i(TAG, "abandonAudioFocus()");
+            mActivity.getSpeechService().abandonAudioFocus(() -> {
+              Log.i(TAG, "setAlerts.onDone.run()");
+              onDone.run();
+            });
+          };
+          Log.i(TAG, "postDelayed() abandonAudioTask");
+          mHandler.postDelayed(abandonAudioTask, MESSAGE_TOKEN, Configuration.ABANDON_AUDIO_TIMER);
+        }
 
-      // Optionally start an async task to proactively abandon audio focus
-      // after a few seconds
-      Runnable abandonAudioTask = null;
-      if(Configuration.ABANDON_AUDIO_TIMER != 0) {
-        abandonAudioTask = () -> {
-          Log.i(TAG, "abandonAudioFocus()");
-          mActivity.getSpeechService().abandonAudioFocus(() -> {
-            Log.i(TAG, "setAlerts.onDone.run()");
-            onDone.run();
-          });
-        };
-        Log.i(TAG, "postDelayed() abandonAudioTask");
-        mHandler.postDelayed(abandonAudioTask, MESSAGE_TOKEN, Configuration.ABANDON_AUDIO_TIMER);
-      }
+        // Request audio focus and duck current audio
+        Log.i(TAG, "requestAudioFocus()");
+        mActivity.getSpeechService().requestAudioFocus(() -> {
+          // Announce the alerts
+          Log.i(TAG, "announceThreat() alert pos 0");
+          announceThreat(announcements, "alert", 0, Configuration.ALERTS_MAX_ANNOUNCE_COUNT, () -> {
+            if(abandonAudioTask != null) {
+              Log.i(TAG, "removeCallbacks abandonAudioTask");
+              mHandler.removeCallbacks(abandonAudioTask);
+            }
 
-      // Request audio focus and duck current audio
-      Log.i(TAG, "requestAudioFocus()");
-      mActivity.getSpeechService().requestAudioFocus(() -> {
-        // Announce the alerts
-        Log.i(TAG, "announceThreat() alert pos 0");
-        announceThreat(announcements, "alert", 0, Configuration.ALERTS_MAX_ANNOUNCE_COUNT, () -> {
-          if(abandonAudioTask != null) {
-            Log.i(TAG, "removeCallbacks abandonAudioTask");
-            mHandler.removeCallbacks(abandonAudioTask);
-          }
-
-          // Abandon audio focus once done
-          Log.i(TAG, "abandonAudioFocus()");
-          mActivity.getSpeechService().abandonAudioFocus(() -> {
-            Log.i(TAG, "setAlerts.onDone.run()");
-            onDone.run();
+            // Abandon audio focus once done
+            Log.i(TAG, "abandonAudioFocus()");
+            mActivity.getSpeechService().abandonAudioFocus(() -> {
+              Log.i(TAG, "setAlerts.onDone.run()");
+              onDone.run();
+            });
           });
         });
-      });
+      }
     }
     else {
       Log.i(TAG, "setAlerts.onDone.run()");
