@@ -68,7 +68,7 @@ public class Configuration {
   public static final boolean DEBUG_USE_ZERO_BEARING = DEBUG;
   public static final boolean DEBUG_ANNOUNCE_VEHICLE_BEARING = false;
   public static final boolean DEBUG_INJECT_TEST_REPORTS = DEBUG;
-  public static final float REPORTS_MAX_DISTANCE = DEBUG ? 50.0f : 3.0f;
+  public static final float REPORTS_MAX_DISTANCE = DEBUG ? 50.0f : 2.0f;
   public static final float REPORTS_REMINDER_DISTANCE = DEBUG ? 7.0f : 1.0f;
   public static final int REPORTS_MAX_ANNOUNCE_COUNT = 3;
 
@@ -160,7 +160,7 @@ public class Configuration {
     """ : "";
 
   public static final boolean DEBUG_INJECT_TEST_AIRCRAFTS = DEBUG;
-  public static final float AIRCRAFTS_MAX_DISTANCE = DEBUG ? 50.0f : 10.0f;
+  public static final float AIRCRAFTS_MAX_DISTANCE = DEBUG ? 50.0f : 5.0f;
   public static final float AIRCRAFTS_REMINDER_DISTANCE = DEBUG ? 10.0f : 2.0f;
   public static final int AIRCRAFTS_MAX_ANNOUNCE_COUNT = 3;
 
