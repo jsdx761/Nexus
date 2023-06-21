@@ -43,6 +43,7 @@ import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.Priority;
 import com.jsd.x761.nexus.Nexus.R;
 import com.nolimits.ds1library.DS1Service;
 
@@ -156,7 +157,8 @@ public class ThreatsActivity extends DS1ServiceActivity {
                   ThreatsActivity.this.onLocationChanged(location);
                 }
               };
-              LocationRequest locationRequest = new LocationRequest.Builder(Configuration.CURRENT_LOCATION_TIMER).build();
+              LocationRequest locationRequest =
+                new LocationRequest.Builder(Priority.PRIORITY_BALANCED_POWER_ACCURACY, Configuration.CURRENT_LOCATION_TIMER).build();
               mLocationClient.requestLocationUpdates(locationRequest, mLocationListener, Looper.getMainLooper());
 
               // First time we're getting a location, proceed with

@@ -157,7 +157,7 @@ public class SplashActivity extends AppCompatActivity {
     }
     else {
       // Start the DS1 device scan activity
-      startScanActivity();
+      startMainMenuActivity();
     }
   }
 
@@ -169,8 +169,8 @@ public class SplashActivity extends AppCompatActivity {
 
     if(requestCode == BLUETOOTH_ENABLE_REQUEST) {
       if(resultCode == RESULT_OK) {
-        // Start the DS1 device scan activity
-        startScanActivity();
+        // Start the main menu activity
+        startMainMenuActivity();
       }
       else {
         finish();
@@ -178,8 +178,8 @@ public class SplashActivity extends AppCompatActivity {
     }
   }
 
-  private void startScanActivity() {
-    Log.i(TAG, "startScanActivity");
+  private void startMainMenuActivity() {
+    Log.i(TAG, "startMainMenuActivity");
     Runnable startTask = () -> {
       Intent intentStart = new Intent(SplashActivity.this, MainMenuActivity.class);
       startActivity(intentStart);
