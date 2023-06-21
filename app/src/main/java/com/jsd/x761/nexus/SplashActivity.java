@@ -30,6 +30,7 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.Settings;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -83,8 +84,10 @@ public class SplashActivity extends AppCompatActivity {
         b.setMessage("Please allow Nexus to access this device's precise location all the time");
         b.setTitle("Location Access");
         b.setPositiveButton(android.R.string.ok, null);
-        b.setOnDismissListener(dialog -> requestPermissions(new String[]{
-          Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_BACKGROUND_LOCATION}, FINE_LOCATION_REQUEST));
+        b.setOnDismissListener(dialog -> {
+          Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+          startActivityForResult(intent, FINE_LOCATION_REQUEST);
+        });
         b.show();
       });
     }
@@ -163,9 +166,9 @@ public class SplashActivity extends AppCompatActivity {
 
   @Override
   protected void onActivityResult(
-    int requestCode, int resultCode, Intent data) {
+    int requestCode, int resultCode, Intent intent) {
     Log.i(TAG, "onActivityResult");
-    super.onActivityResult(requestCode, resultCode, data);
+    super.onActivityResult(requestCode, resultCode, intent);
 
     if(requestCode == BLUETOOTH_ENABLE_REQUEST) {
       if(resultCode == RESULT_OK) {
@@ -175,6 +178,10 @@ public class SplashActivity extends AppCompatActivity {
       else {
         finish();
       }
+    }
+    else if(requestCode == FINE_LOCATION_REQUEST) {
+      requestPermissions(new String[]{
+        Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_BACKGROUND_LOCATION}, FINE_LOCATION_REQUEST);
     }
   }
 
