@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="threats"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher_round"
+        android:shortcutShortLabel="@string/shortcut_threats_short_label">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.jsd.x761.nexus.Nexus"
+            android:targetClass="com.jsd.x761.nexus.ThreatsActivity" />
+        <categories android:name="android.shortcut.conversation" />
+        <capability-binding android:key="actions.intent.NEXUS_THREATS" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="volume"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher_round"
+        android:shortcutShortLabel="@string/shortcut_volume_short_label">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.jsd.x761.nexus.Nexus"
+            android:targetClass="com.jsd.x761.nexus.DS1VolumeActivity" />
+        <categories android:name="android.shortcut.conversation" />
+        <capability-binding android:key="actions.intent.NEXUS_DS1_VOLUME" />
+    </shortcut>
+</shortcuts>
