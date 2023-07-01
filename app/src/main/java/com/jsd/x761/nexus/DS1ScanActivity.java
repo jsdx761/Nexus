@@ -47,6 +47,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -78,7 +79,7 @@ public class DS1ScanActivity extends AppCompatActivity {
   private boolean mScanning = false;
   private BluetoothLeScanner mBluetoothScanner;
   private int mDS1ConnectedPosition = -1;
-  private int mDS1ConnectedColor = Color.WHITE;
+  private int mDS1ConnectedColor = Color.LTGRAY;
 
   private ProgressBar mDS1ScanProgressBar;
   private BluetoothAdapter mBluetoothAdapter;
@@ -93,9 +94,29 @@ public class DS1ScanActivity extends AppCompatActivity {
     Log.i(TAG, "onCreate");
     super.onCreate(b);
 
-    setTitle("DS1 Radar");
+    setTitle("Radar Detector");
 
     setContentView(R.layout.ds1_scan_activity);
+    Switch useDS1Switch = findViewById(R.id.useDS1Switch);
+
+    // Retrieve the DS1 scan and connection preferences
+    mSharedPreferences = getSharedPreferences(getString(R.string.preference_file_key), Context.MODE_PRIVATE);
+    boolean useDS1 = mSharedPreferences.getBoolean(getString(R.string.key_ds1_enabled), false);
+
+    useDS1Switch.setChecked(useDS1);
+    useDS1Switch.setOnCheckedChangeListener((v, isChecked) -> {
+      Log.i(TAG, "onCheckedChangedListener");
+      SharedPreferences.Editor editor = mSharedPreferences.edit();
+      editor.putBoolean(getString(R.string.key_ds1_enabled), isChecked);
+      editor.apply();
+
+      if(isChecked) {
+        refresh();
+      }
+      else {
+        stopScan();
+      }
+    });
 
     ListView ds1DeviceListView = findViewById(R.id.ds1DeviceList);
     mDeviceArrayAdapter = new ArrayAdapter<>(this, R.layout.ds1_device_item, R.id.ds1DeviceItemText, mDeviceNameList) {
@@ -111,8 +132,6 @@ public class DS1ScanActivity extends AppCompatActivity {
     };
     ds1DeviceListView.setAdapter(mDeviceArrayAdapter);
     mDS1ScanProgressBar = findViewById(R.id.ds1ScanProgressBar);
-
-    mSharedPreferences = getSharedPreferences(getString(R.string.preference_file_key), Context.MODE_PRIVATE);
 
     // Get the Bluetooth manager and adapter
     BluetoothManager bluetoothManager = (BluetoothManager)getSystemService(Context.BLUETOOTH_SERVICE);
@@ -153,14 +172,17 @@ public class DS1ScanActivity extends AppCompatActivity {
           Log.i(TAG, String.format("mDeviceNameList.add() %s", deviceName));
           mDeviceNameList.add(deviceName);
           mDeviceList.add(r.getDevice());
+          runOnUiThread(() -> {
+            mDeviceArrayAdapter.notifyDataSetChanged();
+          });
 
-          if(mSharedPreferences.getBoolean(getString(R.string.key_autoconnect), false)) {
-            String autoConnectAddress = mSharedPreferences.getString(getString(R.string.key_autoconnect_address), "");
+          if(mSharedPreferences.getBoolean(getString(R.string.key_ds1_autoconnect), false)) {
+            String autoConnectAddress = mSharedPreferences.getString(getString(R.string.key_ds1_autoconnect_address), "");
             // Auto-connect to the last selected device
             if(autoConnectAddress.length() != 0 && autoConnectAddress.equals(r.getDevice().getAddress())) {
               runOnUiThread(() -> {
                 mDS1ConnectedPosition = mDeviceList.size() - 1;
-                mDS1ConnectedColor = Color.YELLOW;
+                mDS1ConnectedColor = Color.GRAY;
                 mDeviceArrayAdapter.notifyDataSetChanged();
               });
 
@@ -189,13 +211,10 @@ public class DS1ScanActivity extends AppCompatActivity {
           if(!Configuration.DEBUG_USE_NULL_DS1_SERVICE) {
             // Save the last successfully connected device
             SharedPreferences.Editor editor = mSharedPreferences.edit();
-            editor.putBoolean(getString(R.string.key_autoconnect), true);
-            editor.putString(getString(R.string.key_autoconnect_address), mConnectAddress);
+            editor.putBoolean(getString(R.string.key_ds1_autoconnect), true);
+            editor.putString(getString(R.string.key_ds1_autoconnect_address), mConnectAddress);
             editor.apply();
           }
-
-          // Stop scanning for DS1 devices now that a device is connected
-          stopScan();
         }
         else if(action.equals(DS1Service.DS1_DISCONNECTED)) {
           updateDS1DeviceConnectedText(false);
@@ -239,7 +258,7 @@ public class DS1ScanActivity extends AppCompatActivity {
 
       runOnUiThread(() -> {
         mDS1ConnectedPosition = pos;
-        mDS1ConnectedColor = Color.YELLOW;
+        mDS1ConnectedColor = Color.GRAY;
         mDeviceArrayAdapter.notifyDataSetChanged();
       });
 
@@ -273,23 +292,22 @@ public class DS1ScanActivity extends AppCompatActivity {
           Log.e(TAG, String.format("Exception connecting to %s", mConnectAddress), e);
         }
       }
-
-      // Stop scanning for DS1 devices after connecting
-      stopScan();
     });
 
     // Start scanning for DS1 devices
-    Runnable startScanTask = () -> startScan();
-    mHandler.postDelayed(startScanTask, MESSAGE_TOKEN, 1);
+    if(useDS1) {
+      Runnable startScanTask = () -> startScan();
+      mHandler.postDelayed(startScanTask, MESSAGE_TOKEN, 1);
+    }
   }
 
   private void updateDS1DeviceConnectedText(boolean connected) {
     runOnUiThread(() -> {
       if(connected) {
-        mDS1ConnectedColor = Color.GREEN;
+        mDS1ConnectedColor = Color.LTGRAY;
       }
       else {
-        mDS1ConnectedColor = Color.RED;
+        mDS1ConnectedColor = Color.DKGRAY;
       }
       mDeviceArrayAdapter.notifyDataSetChanged();
     });
@@ -362,14 +380,6 @@ public class DS1ScanActivity extends AppCompatActivity {
       return;
     }
 
-    // Stop scanning for DS1 devices after a while, scanning will be
-    // restarted by pressing the Refresh button
-    Runnable stopScanTask = () -> {
-      Log.i(TAG, "stopScan()");
-      stopScan();
-    };
-    mHandler.postDelayed(stopScanTask, MESSAGE_TOKEN, Configuration.DS1_SERVICE_SCAN_TIMER);
-
     mScanning = true;
     mBluetoothScanner = mBluetoothAdapter.getBluetoothLeScanner();
     ScanFilter scanFilter = new ScanFilter.Builder().setDeviceName(Configuration.DS1_SERVICE_SCAN_NAME).build();
@@ -378,8 +388,8 @@ public class DS1ScanActivity extends AppCompatActivity {
     mDS1ScanProgressBar.setVisibility(View.VISIBLE);
   }
 
-  public void onRefreshClick(View v) {
-    Log.i(TAG, "onRefreshClick");
+  private void refresh() {
+    Log.i(TAG, "refresh");
 
     // Disconnect from DS1 device and stop scanning for DS1 devices
     if(mDS1Service.isConnected()) {

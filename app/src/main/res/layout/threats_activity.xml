@@ -7,14 +7,69 @@
     android:screenOrientation="portrait"
     tools:context="com.jsd.x761.nexus.ThreatsActivity">
 
-    <TextView
-        android:id="@+id/ds1ConnectedText"
+    <ImageView
+        android:id="@+id/ds1ConnectedImage"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="24dp"
         android:layout_marginTop="12dp"
-        android:textSize="16sp"
+        android:layout_marginStart="36dp"
+        android:src="@drawable/radar_24"
+        android:contentDescription="Radar"
+        android:visibility="visible"
+        app:tint="#444444"
         app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageView
+        android:id="@+id/reportsActiveImage"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:layout_marginStart="8dp"
+        android:src="@drawable/report_24"
+        android:contentDescription="Reports"
+        android:visibility="visible"
+        app:tint="#444444"
+        app:layout_constraintStart_toEndOf="@id/ds1ConnectedImage"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageView
+        android:id="@+id/aircraftsActiveImage"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:layout_marginStart="8dp"
+        android:src="@drawable/aircraft_24"
+        android:contentDescription="Aircrafts"
+        android:visibility="visible"
+        app:tint="#444444"
+        app:layout_constraintStart_toEndOf="@id/reportsActiveImage"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageView
+        android:id="@+id/networkConnectedImage"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:layout_marginStart="8dp"
+        android:src="@drawable/network_24"
+        android:contentDescription="Network"
+        android:visibility="visible"
+        app:tint="#444444"
+        app:layout_constraintStart_toEndOf="@id/aircraftsActiveImage"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageView
+        android:id="@+id/locationActiveImage"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:layout_marginStart="8dp"
+        android:src="@drawable/location_24"
+        android:contentDescription="Network"
+        android:visibility="visible"
+        app:tint="#444444"
+        app:layout_constraintStart_toEndOf="@id/networkConnectedImage"
         app:layout_constraintTop_toTopOf="parent" />
 
     <androidx.recyclerview.widget.RecyclerView
@@ -25,14 +80,16 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <Button
-        android:id="@+id/threatsRefreshButton"
+    <ImageButton
+        android:id="@+id/threatsSettingsButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="8dp"
-        android:onClick="onRefreshClick"
-        android:text="Refresh"
+        android:layout_marginEnd="24dp"
+        android:onClick="onSettingsClick"
+        android:contentDescription="Settings"
+        android:src="@drawable/settings_32"
         android:visibility="visible"
+        app:tint="#ffffff"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 

@@ -24,6 +24,7 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.widget.EditText;
+import android.widget.Switch;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -32,7 +33,7 @@ import com.jsd.x761.nexus.Nexus.R;
 /**
  * An activity that configures the crowdsourced reports feature preferences.
  */
-public class ReportsPrefActivity extends AppCompatActivity {
+public class ReportsSettingsActivity extends AppCompatActivity {
   private static final String TAG = "REPORTS_PREF_ACTIVITY";
 
   private SharedPreferences mSharedPreferences;
@@ -44,11 +45,22 @@ public class ReportsPrefActivity extends AppCompatActivity {
 
     setTitle("Reports");
 
-    setContentView(R.layout.reports_pref_activity);
+    setContentView(R.layout.reports_settings_activity);
+    Switch useReportsSwitch = findViewById(R.id.useReportsSwitch);
     EditText reportsURLEdit = findViewById(R.id.reportsURLEdit);
 
-    // Retrieve the crowdsourced reports server URL preference
+    // Retrieve the crowd-sourced reports preferences
     mSharedPreferences = getSharedPreferences(getString(R.string.preference_file_key), Context.MODE_PRIVATE);
+    boolean useReports = mSharedPreferences.getBoolean(getString(R.string.key_reports_enabled), false);
+
+    useReportsSwitch.setChecked(useReports);
+    useReportsSwitch.setOnCheckedChangeListener((v, isChecked) -> {
+      Log.i(TAG, "onCheckedChangedListener");
+      SharedPreferences.Editor editor = mSharedPreferences.edit();
+      editor.putBoolean(getString(R.string.key_reports_enabled), isChecked);
+      editor.apply();
+    });
+
     String reportsURL = mSharedPreferences.getString(getString(R.string.key_reports_url), getString(R.string.default_reports_url));
     reportsURLEdit.setText(reportsURL);
 

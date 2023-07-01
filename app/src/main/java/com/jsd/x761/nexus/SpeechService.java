@@ -207,6 +207,11 @@ public class SpeechService extends Service {
     }
   }
 
+  public void reallyAbandonAudioFocus(Runnable onDone) {
+    mDuckedAudioMedia = 0;
+    abandonAudioFocus(onDone);
+  }
+
   public void abandonAudioFocus(Runnable onDone) {
     Log.i(TAG, String.format("abandonAudioFocus mDuckedAudioMedia %d", mDuckedAudioMedia));
     // Keep track of concurrent in-flight audio focus requests

@@ -152,7 +152,7 @@ public class ThreatsAdapter extends RecyclerView.Adapter<ThreatsAdapter.ViewHold
       vh.banddOrLocationText.setText(threat.street.length() != 0 ? threat.street : threat.city);
       if(threat.distance != 0) {
         DecimalFormat df = new DecimalFormat("0.#");
-        vh.frequencyOrDistanceText.setText(String.format("%s miles", df.format(threat.distance)));
+        vh.frequencyOrDistanceText.setText(String.format("%s %s", df.format(threat.distance), threat.distance >= 2.0f ? "miles" : "mile"));
       }
       else {
         vh.frequencyOrDistanceText.setText("");
@@ -174,7 +174,7 @@ public class ThreatsAdapter extends RecyclerView.Adapter<ThreatsAdapter.ViewHold
       vh.banddOrLocationText.setText(threat.owner.length() != 0 ? threat.owner : "Unidentified");
       if(threat.distance != 0) {
         DecimalFormat df = new DecimalFormat("0.#");
-        vh.frequencyOrDistanceText.setText(String.format("%s miles", df.format(threat.distance)));
+        vh.frequencyOrDistanceText.setText(String.format("%s %s", df.format(threat.distance), threat.distance >= 2.0f ? "miles" : "mile"));
       }
       else {
         vh.frequencyOrDistanceText.setText("");
@@ -328,7 +328,7 @@ public class ThreatsAdapter extends RecyclerView.Adapter<ThreatsAdapter.ViewHold
       }
       if(threat.distance != 0) {
         DecimalFormat df = new DecimalFormat("0.#");
-        speech += String.format(" %s miles away", df.format(threat.distance));
+        speech += String.format(" %s %s away", df.format(threat.distance), threat.distance >= 2.0f ? "miles" : "mile");
       }
       if(threat.street.length() != 0) {
         speech += String.format(" on %s", threat.street);
@@ -357,7 +357,7 @@ public class ThreatsAdapter extends RecyclerView.Adapter<ThreatsAdapter.ViewHold
       }
       if(threat.distance != 0) {
         DecimalFormat df = new DecimalFormat("0.#");
-        speech += String.format(" %s miles away", df.format(threat.distance));
+        speech += String.format(" %s %s away", df.format(threat.distance), threat.distance >= 2.0f ? "miles" : "mile");
       }
     }
     else {
@@ -502,7 +502,7 @@ public class ThreatsAdapter extends RecyclerView.Adapter<ThreatsAdapter.ViewHold
         abandonAudioTask = () -> {
           Log.i(TAG, "abandonAudioFocus()");
           mActivity.getSpeechService().abandonAudioFocus(() -> {
-            Log.i(TAG, "setReports.onDone.run()");
+            Log.i(TAG, "setReports.onDone()");
             onDone.run();
           });
         };

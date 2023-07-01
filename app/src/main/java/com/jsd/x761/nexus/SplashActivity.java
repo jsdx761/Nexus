@@ -188,8 +188,9 @@ public class SplashActivity extends AppCompatActivity {
   private void startMainMenuActivity() {
     Log.i(TAG, "startMainMenuActivity");
     Runnable startTask = () -> {
-      Intent intentStart = new Intent(SplashActivity.this, MainMenuActivity.class);
-      startActivity(intentStart);
+      Intent intent = new Intent(SplashActivity.this, ThreatsActivity.class);
+      intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+      startActivity(intent);
       finish();
     };
 

@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:screenOrientation="portrait"
-    tools:context="com.jsd.x761.nexus.MainMenuActivity">
+    tools:context="com.jsd.x761.nexus.SettingsMenuActivity">
 
     <ListView
         android:id="@+id/menuView"

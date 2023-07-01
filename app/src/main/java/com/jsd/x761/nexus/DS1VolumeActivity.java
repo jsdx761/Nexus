@@ -51,7 +51,7 @@ public class DS1VolumeActivity extends DS1ServiceActivity {
     setTitle("Volume");
 
     setContentView(R.layout.ds1_volume_activity);
-    mDS1ConnectedText = findViewById(R.id.ds1ConnectedText);
+    mDS1ConnectedImage = findViewById(R.id.ds1ConnectedImage);
     mDS1VolumeSeekBar = findViewById(R.id.ds1VolumeSeekBar);
     mDS1VolumeMinus = findViewById(R.id.ds1VolumeMinus);
     mDS1VolumePlus = findViewById(R.id.ds1VolumePlus);
@@ -117,7 +117,7 @@ public class DS1VolumeActivity extends DS1ServiceActivity {
 
   @Override
   protected void onDS1DeviceConnected() {
-    Log.i(TAG, "onDS1DeviceDisconnected");
+    Log.i(TAG, "onDS1DeviceConnected");
     mHandler.postDelayed(() -> {
       // Request the DS1 device settings
       mDS1Service.requestSettings();
@@ -130,6 +130,9 @@ public class DS1VolumeActivity extends DS1ServiceActivity {
     mDS1VolumeSeekBar.setEnabled(false);
     mDS1VolumeMinus.setEnabled(false);
     mDS1VolumePlus.setEnabled(false);
+
+    // Try to reconnect to the DS1 device
+    scheduleRefreshDS1Service();
   }
 
   public void onPlus(View v) {
@@ -159,5 +162,10 @@ public class DS1VolumeActivity extends DS1ServiceActivity {
     Log.i(TAG, "onDestroy");
     super.onDestroy();
     mHandler.removeCallbacksAndMessages(MESSAGE_TOKEN);
+  }
+
+  public void onRefreshClick(View v) {
+    Log.i(TAG, "onRefreshClick");
+    recreate();
   }
 }

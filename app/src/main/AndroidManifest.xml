@@ -35,6 +35,7 @@
             android:name="com.nolimits.ds1library.ExtendedDS1Service"
             android:enabled="true"
             android:exported="false"></service>
+
         <activity
             android:name="com.jsd.x761.nexus.SplashActivity"
             android:exported="true"
@@ -43,11 +44,12 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-            <meta-data android:name="android.app.shortcuts"
+            <meta-data
+                android:name="android.app.shortcuts"
                 android:resource="@xml/shortcuts" />
         </activity>
         <activity
-            android:name="com.jsd.x761.nexus.MainMenuActivity"
+            android:name="com.jsd.x761.nexus.SettingsMenuActivity"
             android:exported="true"
             android:screenOrientation="portrait">
             <intent-filter>
@@ -63,7 +65,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="com.jsd.x761.nexus.ReportsPrefActivity"
+            android:name="com.jsd.x761.nexus.ReportsSettingsActivity"
             android:exported="true"
             android:screenOrientation="portrait">
             <intent-filter>
@@ -71,7 +73,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="com.jsd.x761.nexus.AircraftsPrefActivity"
+            android:name="com.jsd.x761.nexus.AircraftsSettingsActivity"
             android:exported="true"
             android:screenOrientation="portrait">
             <intent-filter>

@@ -19,40 +19,50 @@
 
 package com.jsd.x761.nexus;
 
+import android.content.Intent;
+import android.os.Bundle;
 import android.util.Log;
 
 /**
  * An activity that displays the app main menu.
  */
-public class MainMenuActivity extends MenuActivity {
+public class SettingsMenuActivity extends MenuActivity {
   private static final String TAG = "MAIN_MENU_ACTIVITY";
+
+  @Override
+  protected void onCreate(Bundle b) {
+    Log.i(TAG, "onCreate");
+    super.onCreate(b);
+
+    setTitle("Settings");
+  }
 
   @Override
   protected void addMenuItems() {
     Log.i(TAG, "addMenuItems");
 
-    /*
-    mArrayMenu.add("  Menu");
-    mIntentMenu.add(new ActivityConfiguration(null));
-    mHeaderList.add(mArrayMenu.size() - 1);
-    */
-
-    mArrayMenu.add("      Threats");
-    mIntentMenu.add(new ActivityConfiguration(ThreatsActivity.class));
-
     mArrayMenu.add("      Sources");
     mIntentMenu.add(new ActivityConfiguration(null));
 
-    mArrayMenu.add("        DS1 Radar");
+    mArrayMenu.add("        Radar Detector");
     mIntentMenu.add(new ActivityConfiguration(DS1ScanActivity.class));
 
+    mArrayMenu.add("          Volume");
+    mIntentMenu.add(new ActivityConfiguration(DS1VolumeActivity.class));
+
     mArrayMenu.add("        Reports");
-    mIntentMenu.add(new ActivityConfiguration(ReportsPrefActivity.class));
+    mIntentMenu.add(new ActivityConfiguration(ReportsSettingsActivity.class));
 
     mArrayMenu.add("        Aircrafts");
-    mIntentMenu.add(new ActivityConfiguration(AircraftsPrefActivity.class));
+    mIntentMenu.add(new ActivityConfiguration(AircraftsSettingsActivity.class));
+  }
 
-    mArrayMenu.add("      DS1 Volume");
-    mIntentMenu.add(new ActivityConfiguration(DS1VolumeActivity.class));
+  @Override
+  public void onBackPressed() {
+    Log.i(TAG, "onBackPressed");
+    Intent intent = new Intent(this, ThreatsActivity.class);
+    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+    startActivity(intent);
+    finish();
   }
 }

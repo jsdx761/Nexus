@@ -24,6 +24,7 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.widget.EditText;
+import android.widget.Switch;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -32,7 +33,7 @@ import com.jsd.x761.nexus.Nexus.R;
 /**
  * An activity that configures the aircraft report feature preferences.
  */
-public class AircraftsPrefActivity extends AppCompatActivity {
+public class AircraftsSettingsActivity extends AppCompatActivity {
   private static final String TAG = "AIRCRAFTS_PREF_ACTIVITY";
 
   private SharedPreferences mSharedPreferences;
@@ -44,13 +45,24 @@ public class AircraftsPrefActivity extends AppCompatActivity {
 
     setTitle("Aircrafts");
 
-    setContentView(R.layout.aircrafts_pref_activity);
+    setContentView(R.layout.aircrafts_settings_activity);
+    Switch useAircraftsSwitch = findViewById(R.id.useAircraftsSwitch);
     EditText aircraftsURLEdit = findViewById(R.id.aircraftsURLEdit);
     EditText aircraftsUserEdit = findViewById(R.id.aircraftsUserEdit);
     EditText aircraftsPasswordEdit = findViewById(R.id.aircraftsPasswordEdit);
 
     // Retrieve the aircraft report server URL preference
     mSharedPreferences = getSharedPreferences(getString(R.string.preference_file_key), Context.MODE_PRIVATE);
+
+    boolean useAircrafts = mSharedPreferences.getBoolean(getString(R.string.key_aircrafts_enabled), false);
+    useAircraftsSwitch.setChecked(useAircrafts);
+    useAircraftsSwitch.setOnCheckedChangeListener((v, isChecked) -> {
+      Log.i(TAG, "onCheckedChangedListener");
+      SharedPreferences.Editor editor = mSharedPreferences.edit();
+      editor.putBoolean(getString(R.string.key_aircrafts_enabled), isChecked);
+      editor.apply();
+    });
+
     String aircraftsURL = mSharedPreferences.getString(getString(R.string.key_aircrafts_url), getString(R.string.default_aircrafts_url));
     aircraftsURLEdit.setText(aircraftsURL);
     aircraftsURLEdit.addTextChangedListener(new TextWatcher() {

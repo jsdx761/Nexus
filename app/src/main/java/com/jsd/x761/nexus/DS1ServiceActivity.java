@@ -32,7 +32,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.util.Log;
-import android.widget.TextView;
+import android.widget.ImageView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -49,11 +49,14 @@ public class DS1ServiceActivity extends AppCompatActivity {
 
   private final Handler mHandler = new Handler(Looper.getMainLooper());
   private SharedPreferences mSharedPreferences;
+  protected boolean mDS1ServiceEnabled;
+  protected int mDS1ServiceActive;
   private BroadcastReceiver mDS1Receiver;
   private ServiceConnection mDS1ServiceConnection;
   protected DS1Service mDS1Service;
   private boolean mDS1DeviceDisconnected = false;
-  protected TextView mDS1ConnectedText;
+  protected ImageView mDS1ConnectedImage;
+  private Runnable mRefreshDS1DeviceTask;
 
   // A receiver for DS1 notifications
   @Override
@@ -62,22 +65,33 @@ public class DS1ServiceActivity extends AppCompatActivity {
     super.onCreate(b);
 
     mSharedPreferences = getSharedPreferences(getString(R.string.preference_file_key), Context.MODE_PRIVATE);
+    mDS1ServiceEnabled = mSharedPreferences.getBoolean(getString(R.string.key_ds1_enabled), false);
+
+    if(mDS1ServiceEnabled) {
+      mDS1ServiceActive = 1;
+      mRefreshDS1DeviceTask = () -> {
+        refreshDS1Service();
+      };
+    }
   }
 
   private void updateDS1DeviceConnectedText(boolean connected) {
     runOnUiThread(() -> {
       if(connected) {
-        mDS1ConnectedText.setText("DS1");
-        mDS1ConnectedText.setTextColor(Color.GREEN);
+        mDS1ConnectedImage.setColorFilter(Color.LTGRAY);
       }
       else {
-        mDS1ConnectedText.setText("DS1");
-        mDS1ConnectedText.setTextColor(Color.RED);
+        mDS1ConnectedImage.setColorFilter(Color.DKGRAY);
       }
     });
   }
 
   protected void bindDS1Service(Runnable onDone) {
+    if(!mDS1ServiceEnabled) {
+      mHandler.postDelayed(onDone, DS1ServiceActivity.MESSAGE_TOKEN, 1);
+      return;
+    }
+
     // Report that the DS1 device is not connected if connection doesn't
     // complete after a few seconds
     Runnable notConnectedTask = () -> {
@@ -133,13 +147,12 @@ public class DS1ServiceActivity extends AppCompatActivity {
         // Auto connect to the configured DS1 device
         if(mDS1Service != null) {
           if(!mDS1Service.isConnected()) {
-            if(mSharedPreferences.getBoolean(getString(R.string.key_autoconnect), false)) {
-              String autoConnectAddress = mSharedPreferences.getString(getString(R.string.key_autoconnect_address), "");
+            if(mSharedPreferences.getBoolean(getString(R.string.key_ds1_autoconnect), false)) {
+              String autoConnectAddress = mSharedPreferences.getString(getString(R.string.key_ds1_autoconnect_address), "");
               // Auto-connect to the last selected device
               if(autoConnectAddress.length() != 0) {
                 try {
-                  mDS1ConnectedText.setText("DS1");
-                  mDS1ConnectedText.setTextColor(Color.YELLOW);
+                  mDS1ConnectedImage.setColorFilter(Color.GRAY);
 
                   Log.i(TAG, String.format("mDS1Service.connectTo() %s", autoConnectAddress));
                   mDS1Service.connectTo(autoConnectAddress);
@@ -171,6 +184,9 @@ public class DS1ServiceActivity extends AppCompatActivity {
 
   protected void onDS1DeviceConnected() {
     Log.i(TAG, "onDS1DeviceConnected");
+    if(mDS1ServiceActive == 0) {
+      mDS1ServiceActive = 2;
+    }
   }
 
   protected void onDS1DeviceData() {
@@ -179,7 +195,36 @@ public class DS1ServiceActivity extends AppCompatActivity {
 
   protected void onDS1DeviceDisconnected() {
     Log.i(TAG, "onDS1DeviceDisconnected");
+    if(mDS1ServiceActive != 0) {
+      mDS1ServiceActive = 0;
+    }
   }
+
+  private void refreshDS1Service() {
+    mHandler.removeCallbacksAndMessages(MESSAGE_TOKEN);
+    if(mDS1Receiver != null) {
+      unregisterReceiver(mDS1Receiver);
+    }
+    if(mDS1Service != null) {
+      Log.i(TAG, "mDS1Service.disconnect()");
+      mDS1Service.disconnect();
+      mDS1Service.close();
+    }
+    if(mDS1ServiceConnection != null) {
+      Log.i(TAG, "unbindService() mDS1ServiceConnection");
+      unbindService(mDS1ServiceConnection);
+    }
+    mDS1DeviceDisconnected = false;
+    bindDS1Service(() -> {
+    });
+  }
+
+  protected void scheduleRefreshDS1Service() {
+    mHandler.removeCallbacks(mRefreshDS1DeviceTask);
+    mHandler.postDelayed(mRefreshDS1DeviceTask, MESSAGE_TOKEN, Configuration.DS1_SERVICE_RECONNECT_TIMER);
+  }
+
+  ;
 
   @Override
   protected void onDestroy() {

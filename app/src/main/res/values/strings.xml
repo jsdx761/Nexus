@@ -5,10 +5,13 @@
     values-round/strings.xml for round devices.
     -->
     <string name="preference_file_key">NexusPreferences</string>
-    <string name="key_autoconnect">NexusAutoconnect</string>
-    <string name="key_autoconnect_address">NexusAutoconnectAddress</string>
+    <string name="key_ds1_enabled">NexusDS1Enabled</string>
+    <string name="key_ds1_autoconnect">NexusDS1Autoconnect</string>
+    <string name="key_ds1_autoconnect_address">NexusDS1AutoconnectAddress</string>
+    <string name="key_reports_enabled">NexusReportsEnabled</string>
     <string name="key_reports_url">NexusReportsURL</string>
     <string name="default_reports_url">https://www.example.com</string>
+    <string name="key_aircrafts_enabled">NexusAircraftsEnabled</string>
     <string name="key_aircrafts_url">NexusAircraftsURL</string>
     <string name="default_aircrafts_url">https://www.example.com</string>
     <string name="key_aircrafts_user">NexusAircraftsUser</string>
