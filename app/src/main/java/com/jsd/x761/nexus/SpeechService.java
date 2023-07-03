@@ -184,6 +184,9 @@ public class SpeechService extends Service {
       Log.i(TAG, "mTextToSpeech.shutdown()");
       mTextToSpeech.shutdown();
     }
+
+    mDuckedAudioMedia = 0;
+    abandonAudioFocus(() -> {});
   }
 
   public void requestAudioFocus(Runnable onDone) {
@@ -205,11 +208,6 @@ public class SpeechService extends Service {
     else {
       onDone.run();
     }
-  }
-
-  public void reallyAbandonAudioFocus(Runnable onDone) {
-    mDuckedAudioMedia = 0;
-    abandonAudioFocus(onDone);
   }
 
   public void abandonAudioFocus(Runnable onDone) {

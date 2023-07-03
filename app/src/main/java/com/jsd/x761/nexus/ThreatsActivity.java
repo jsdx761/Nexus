@@ -358,13 +358,6 @@ public class ThreatsActivity extends DS1ServiceActivity {
 
     mHandler.removeCallbacksAndMessages(MESSAGE_TOKEN);
 
-    if(mSpeechService != null) {
-      mHandler.postDelayed(() -> {
-        mSpeechService.reallyAbandonAudioFocus(() -> {
-          Log.i(TAG, "mSpeechService.reallyAbandonAudioFocus.onDone");
-        });
-      }, MESSAGE_TOKEN, 1000);
-    }
     if(mSpeechServiceConnection != null) {
       Log.i(TAG, "unbindService() mSpeechServiceConnection");
       unbindService(mSpeechServiceConnection);
