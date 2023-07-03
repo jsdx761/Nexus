@@ -27,7 +27,7 @@ public class Configuration {
   public static final long DS1_SERVICE_SCAN_TIMER = 10000;
   public static final long DS1_SERVICE_CONNECT_WAIT_TIMER = 3000;
   public static final long DS1_SERVICE_SETUP_TIMER = 1000;
-  public static final long DS1_SERVICE_RECONNECT_TIMER = 2000;
+  public static final long DS1_SERVICE_RECONNECT_TIMER = 5000;
   public static final boolean ENABLE_ALERTS = true;
   public static final long ALERTS_CLEAR_TIMER = 6000;
   public static final long ABANDON_AUDIO_TIMER = 0;
