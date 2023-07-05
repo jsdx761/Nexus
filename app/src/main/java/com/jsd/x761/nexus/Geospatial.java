@@ -92,8 +92,17 @@ public class Geospatial {
     return relativeBearing;
   }
 
-  public static int toHour(float bearing) {
-    int hour = Math.round(bearing / 30.0f);
+  public static int getRelativeBearing(
+    int bearing, int bearingToTarget) {
+    int relativeBearing = bearingToTarget - bearing;
+    if(relativeBearing < 0) {
+      relativeBearing += 12;
+    }
+    return relativeBearing;
+  }
+
+  public static int toHour(float degrees) {
+    int hour = Math.round(degrees / 30.0f);
     if(hour == 0) {
       hour = 12;
     }

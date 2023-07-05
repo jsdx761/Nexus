@@ -57,7 +57,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="com.jsd.x761.nexus.ThreatsActivity"
+            android:name="com.jsd.x761.nexus.AlertsActivity"
             android:exported="true"
             android:screenOrientation="portrait">
             <intent-filter>

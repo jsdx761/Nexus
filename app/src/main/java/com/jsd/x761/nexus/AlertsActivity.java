@@ -60,14 +60,14 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 /**
- * An activity that collects and presents a view of the relevant threats.
+ * An activity that collects and presents a view of the relevant alerts.
  */
-public class ThreatsActivity extends DS1ServiceActivity {
-  private static final String TAG = "THREATS_ACTIVITY";
-  public static final String MESSAGE_TOKEN = "THREATS_ACTIVITY_MESSAGES";
+public class AlertsActivity extends DS1ServiceActivity {
+  private static final String TAG = "ALERTS_ACTIVITY";
+  public static final String MESSAGE_TOKEN = "ALERTS_ACTIVITY_MESSAGES";
 
   private final Handler mHandler = new Handler(Looper.getMainLooper());
-  private ThreatsAdapter mThreatsAdapter;
+  private AlertsAdapter mAlertsAdapter;
   private ServiceConnection mSpeechServiceConnection;
   private SpeechService mSpeechService;
   private Runnable mClearDS1AlertsTask;
@@ -75,6 +75,7 @@ public class ThreatsActivity extends DS1ServiceActivity {
   private SharedPreferences mSharedPreferences;
   private Runnable mDebugBackgroundAlertsTask;
   private ImageView mLocationActiveImage;
+  RecyclerView mAlertsRecyclerView;
   private FusedLocationProviderClient mLocationClient;
   private LocationCallback mLocationCallback;
   private Location mLastLocation;
@@ -104,18 +105,16 @@ public class ThreatsActivity extends DS1ServiceActivity {
     Log.i(TAG, "onCreate");
     super.onCreate(b);
 
-    setTitle("Threats");
+    setTitle("Alerts");
 
-    setContentView(R.layout.threats_activity);
+    setContentView(R.layout.alerts_activity);
     mDS1ConnectedImage = findViewById(R.id.ds1ConnectedImage);
     mReportsActiveImage = findViewById(R.id.reportsActiveImage);
     mAircraftsActiveImage = findViewById(R.id.aircraftsActiveImage);
     mNetworkConnectedImage = findViewById(R.id.networkConnectedImage);
     mLocationActiveImage = findViewById(R.id.locationActiveImage);
-    RecyclerView threatsRecyclerView = findViewById(R.id.threatsRecyclerView);
-    threatsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-    mThreatsAdapter = new ThreatsAdapter(ThreatsActivity.this);
-    threatsRecyclerView.setAdapter(mThreatsAdapter);
+    mAlertsRecyclerView = findViewById(R.id.alertsRecyclerView);
+    mAlertsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
     mSharedPreferences = getSharedPreferences(getString(R.string.preference_file_key), Context.MODE_PRIVATE);
 
@@ -142,7 +141,7 @@ public class ThreatsActivity extends DS1ServiceActivity {
             Log.i(TAG, "bindDS1Service.onDone");
             // Both services are now available, proceed with setup
 
-            if(Configuration.ENABLE_ALERTS && Configuration.DEBUG_INJECT_TEST_BACKGROUND_ALERTS) {
+            if(Configuration.ENABLE_RADAR_ALERTS && Configuration.DEBUG_INJECT_TEST_BACKGROUND_ALERTS) {
               // Inject test background DS1 alerts every few seconds to help
               // test the app without having to use an actual DS1 device
               // everytime
@@ -176,7 +175,7 @@ public class ThreatsActivity extends DS1ServiceActivity {
               mAircraftsSourceURL = mSharedPreferences.getString(getString(R.string.key_aircrafts_url), getString(R.string.default_aircrafts_url));
               if(Configuration.DEBUG_INJECT_TEST_AIRCRAFTS || (mAircraftsEnabled && !mAircraftsSourceURL.equals(getString(R.string.default_aircrafts_url)))) {
                 // Load aircrafts database
-                mAircraftsDatabase = new AircraftsDatabase(ThreatsActivity.this);
+                mAircraftsDatabase = new AircraftsDatabase(AlertsActivity.this);
                 if(mAircraftsDatabase.getInterestingAircrafts().size() != 0) {
                   mAircraftsActive = 1;
                 }
@@ -208,10 +207,10 @@ public class ThreatsActivity extends DS1ServiceActivity {
                 public void onLocationResult(@NonNull LocationResult locationResult) {
                   Log.i(TAG, "locationCallback.onLocationResult");
                   if(locationResult == null) {
-                    ThreatsActivity.this.onLocationChanged(null);
+                    AlertsActivity.this.onLocationChanged(null);
                   }
                   else {
-                    ThreatsActivity.this.onLocationChanged(locationResult.getLastLocation());
+                    AlertsActivity.this.onLocationChanged(locationResult.getLastLocation());
                   }
                 }
 
@@ -219,7 +218,7 @@ public class ThreatsActivity extends DS1ServiceActivity {
                 public void onLocationAvailability(@NonNull LocationAvailability locationAvailability) {
                   Log.i(TAG, "locationCallback.onLocationAvailability");
                   if(!locationAvailability.isLocationAvailable()) {
-                    ThreatsActivity.this.onLocationChanged(null);
+                    AlertsActivity.this.onLocationChanged(null);
                   }
                   else {
                     mHandler.postDelayed(getCurrentLocationTask, MESSAGE_TOKEN, 1000);
@@ -295,6 +294,9 @@ public class ThreatsActivity extends DS1ServiceActivity {
         Log.i(TAG, "mSpeechServiceConnection.onServiceConnected");
         mSpeechService = ((SpeechService.ThisBinder)s).getService();
         mSpeechService.isReady(onDone);
+
+        mAlertsAdapter = new AlertsAdapter(AlertsActivity.this);
+        mAlertsRecyclerView.setAdapter(mAlertsAdapter);
       }
 
       @Override
@@ -356,6 +358,8 @@ public class ThreatsActivity extends DS1ServiceActivity {
     Log.i(TAG, "onDestroy");
     super.onDestroy();
 
+    mAlertsAdapter.onDestroy();
+
     mHandler.removeCallbacksAndMessages(MESSAGE_TOKEN);
 
     if(mSpeechServiceConnection != null) {
@@ -371,14 +375,14 @@ public class ThreatsActivity extends DS1ServiceActivity {
   @Override
   protected void onDS1DeviceData() {
     Log.i(TAG, "onDS1DeviceData");
-    List<Threat> alerts = new ArrayList<>();
+    List<Alert> alerts = new ArrayList<>();
     if(mDS1Service != null && mDS1Service.isConnected()) {
       // Collect alerts from the DS1 device
       List<DS1Service.RD_Alert> ds1Alerts = mDS1Service.getmAlerts();
       if(ds1Alerts != null) {
         for(DS1Service.RD_Alert ds1Alert : ds1Alerts) {
           if(ds1Alert.detected && !ds1Alert.muted) {
-            alerts.add(Threat.fromDS1Alert(ds1Alert));
+            alerts.add(Alert.fromDS1Alert(ds1Alert));
           }
         }
       }
@@ -389,18 +393,18 @@ public class ThreatsActivity extends DS1ServiceActivity {
       Log.i(TAG, "injecting test DS1 alerts");
       DS1Service ds1Service = new DS1Service();
       for(String alert : Configuration.DEBUG_TEST_ALERTS) {
-        alerts.add(Threat.fromDS1Alert(ds1Service.new RD_Alert(alert)));
+        alerts.add(Alert.fromDS1Alert(ds1Service.new RD_Alert(alert)));
       }
     }
 
-    List<Threat> newAlerts = new ArrayList<>();
-    List<Threat> mAlerts = mThreatsAdapter.getAlerts();
-    for(Threat alert : alerts) {
-      for(Threat mAlert : mAlerts) {
+    List<Alert> newAlerts = new ArrayList<>();
+    List<Alert> mAlerts = mAlertsAdapter.getRadarAlerts();
+    for(Alert alert : alerts) {
+      for(Alert mAlert : mAlerts) {
         // Detect repeating alerts, reuse the existing alert instead of
         // adding the repeated alert to avoid announcing the same alert
         // over and over
-        if(alert.threatClass == mAlert.threatClass && alert.band == mAlert.band && alert.frequency == mAlert.frequency) {
+        if(alert.alertClass == mAlert.alertClass && alert.band == mAlert.band && alert.frequency == mAlert.frequency) {
           mAlert.direction = alert.direction;
           mAlert.intensity = alert.intensity;
           Log.i(TAG, "repeating alert");
@@ -423,7 +427,7 @@ public class ThreatsActivity extends DS1ServiceActivity {
       mHandler.removeCallbacks(mClearDS1AlertsTask);
       mClearDS1AlertsTask = null;
     }
-    mThreatsAdapter.setAlerts(newAlerts, () -> startClearAlertsTask());
+    mAlertsAdapter.setRadarAlerts(newAlerts, () -> startClearAlertsTask());
   }
 
   private void startClearAlertsTask() {
@@ -433,8 +437,8 @@ public class ThreatsActivity extends DS1ServiceActivity {
       mClearDS1AlertsTask = null;
     }
     mClearDS1AlertsTask = () -> {
-      Log.i(TAG, "setAlerts(())");
-      mThreatsAdapter.setAlerts(new ArrayList<>(), () -> {
+      Log.i(TAG, "setRadarAlerts(())");
+      mAlertsAdapter.setRadarAlerts(new ArrayList<>(), () -> {
       });
     };
 
@@ -497,6 +501,21 @@ public class ThreatsActivity extends DS1ServiceActivity {
             mSpeechService.announceEvent("No vehicle bearing", () -> {
             });
           }
+        }
+
+        // Refresh reports and aircrafts with the new location
+        if(mReportsActive != 0) {
+          List<Alert> updatedReports = new ArrayList<>();
+          for(Alert alert : mAlertsAdapter.getReportAlerts()) {
+            updatedReports.add(Alert.fromReport(mLocation, alert));
+          }
+          onReportsData(updatedReports);
+
+          List<Alert> updatedAircrafts = new ArrayList<>();
+          for(Alert alert : mAlertsAdapter.getAircraftAlerts()) {
+            updatedAircrafts.add(Alert.fromAircraft(mLocation, alert));
+          }
+          onAircraftsData(updatedAircrafts);
         }
       }
       else {
@@ -564,7 +583,7 @@ public class ThreatsActivity extends DS1ServiceActivity {
         if(mLocation != null) {
           ReportsFetchTask reportsFetchTask = new ReportsFetchTask(mReportsSourceURL, mLocation) {
             @Override
-            protected void onDone(List<Threat> reports) {
+            protected void onDone(List<Alert> reports) {
               if(reports == null) {
                 Log.i(TAG, "reportsFetchTask.onDone null reports");
               }
@@ -588,7 +607,7 @@ public class ThreatsActivity extends DS1ServiceActivity {
     });
   }
 
-  protected void onReportsData(List<Threat> reports) {
+  protected void onReportsData(List<Alert> reports) {
     if(reports == null) {
       mReportsActiveImage.setColorFilter(Color.DKGRAY);
       if(mReportsActive != 0) {
@@ -611,18 +630,21 @@ public class ThreatsActivity extends DS1ServiceActivity {
         });
       }
     }
-    if(reports.size() == 0) {
-      return;
-    }
+
     mHandler.postDelayed(() -> {
-      // Sort collected reports by priority
-      reports.sort(Comparator.comparingInt(o -> o.priority));
+      // Filter out reports beyond configured distance
+      List<Alert> inRangeReports = new ArrayList<>();
+      for(Alert report : reports) {
+        if(report.distance <= Configuration.REPORTS_MAX_DISTANCE) {
+          inRangeReports.add(report);
+        }
+      }
 
       // Filter out duplicate reports
-      List<Threat> uniqueReports = new ArrayList<>();
-      for(Threat report : reports) {
+      List<Alert> uniqueReports = new ArrayList<>();
+      for(Alert report : inRangeReports) {
         boolean duplicate = false;
-        for(Threat uniqueReport : uniqueReports) {
+        for(Alert uniqueReport : uniqueReports) {
           if(report.isDuplicateReport(uniqueReport)) {
             duplicate = true;
             break;
@@ -633,19 +655,15 @@ public class ThreatsActivity extends DS1ServiceActivity {
         }
       }
 
-      // Announce each report once initially and then announce a reminder
-      // once it gets closer
-      List<Threat> newReports = new ArrayList<>();
-      List<Threat> mReports = mThreatsAdapter.getReports();
-      for(Threat report : uniqueReports) {
-        for(Threat mReport : mReports) {
+      // Update existing reports with their new position
+      List<Alert> newReports = new ArrayList<>();
+      List<Alert> mReports = mAlertsAdapter.getReportAlerts();
+      for(Alert report : uniqueReports) {
+        for(Alert mReport : mReports) {
           if(report.isSameReport(mReport)) {
             Log.i(TAG, String.format("existing report with new distance %f", report.distance));
-            if(report.distance <= Configuration.REPORTS_REMINDER_DISTANCE && mReport.distance > Configuration.REPORTS_REMINDER_DISTANCE) {
-              mReport.announced = 0;
-            }
             mReport.distance = report.distance;
-            mReport.hour = report.hour;
+            mReport.bearing = report.bearing;
             report = mReport;
             break;
           }
@@ -656,7 +674,7 @@ public class ThreatsActivity extends DS1ServiceActivity {
       // Sort final list of reports by priority
       newReports.sort(Comparator.comparingInt(o -> o.priority));
 
-      mThreatsAdapter.setReports(newReports, () -> {
+      mAlertsAdapter.setReportAlerts(newReports, () -> {
       });
     }, MESSAGE_TOKEN, 1);
   }
@@ -672,7 +690,7 @@ public class ThreatsActivity extends DS1ServiceActivity {
           AircraftsFetchTask aircraftsFetchTask = new AircraftsFetchTask(mAircraftsSourceURL, mAircraftsUser, mAircraftsPassword, mAircraftsDatabase,
             mLocation) {
             @Override
-            protected void onDone(List<Threat> aircrafts) {
+            protected void onDone(List<Alert> aircrafts) {
               if(aircrafts == null) {
                 Log.i(TAG, "aircraftsFetchTask.onDone null aircraft state vectors");
               }
@@ -696,7 +714,7 @@ public class ThreatsActivity extends DS1ServiceActivity {
     });
   }
 
-  protected void onAircraftsData(List<Threat> aircrafts) {
+  protected void onAircraftsData(List<Alert> aircrafts) {
     if(aircrafts == null) {
       mAircraftsActiveImage.setColorFilter(Color.DKGRAY);
       if(mAircraftsActive != 0) {
@@ -719,25 +737,27 @@ public class ThreatsActivity extends DS1ServiceActivity {
         });
       }
     }
-    if(aircrafts.size() == 0) {
-      return;
-    }
+
     mHandler.postDelayed(() -> {
-      List<Threat> newAircrafts = new ArrayList<>();
-      List<Threat> mAircrafts = mThreatsAdapter.getAircrafts();
-      // Announce each aircraft state vector once initially and then
-      // announce a reminder once it gets closer
-      for(Threat aircraft : aircrafts) {
-        for(Threat mAircraft : mAircrafts) {
+      // Filter out reports beyond configured distance
+      List<Alert> inRangeAircrafts = new ArrayList<>();
+      for(Alert aircraft : aircrafts) {
+        if(aircraft.distance <= Configuration.AIRCRAFTS_MAX_DISTANCE) {
+          inRangeAircrafts.add(aircraft);
+        }
+      }
+
+      // Update existing aircraft state vectors with their new position
+      List<Alert> newAircrafts = new ArrayList<>();
+      List<Alert> mAircrafts = mAlertsAdapter.getAircraftAlerts();
+      for(Alert aircraft : inRangeAircrafts) {
+        for(Alert mAircraft : mAircrafts) {
           if(aircraft.isSameAircraft(mAircraft)) {
             Log.i(TAG, String.format("existing aircraft state vector with new distance %f", aircraft.distance));
-            if(aircraft.distance <= Configuration.AIRCRAFTS_REMINDER_DISTANCE && mAircraft.distance > Configuration.AIRCRAFTS_REMINDER_DISTANCE) {
-              mAircraft.announced = 0;
-            }
             mAircraft.distance = aircraft.distance;
             mAircraft.latitude = aircraft.latitude;
             mAircraft.longitude = aircraft.longitude;
-            mAircraft.hour = aircraft.hour;
+            mAircraft.bearing = aircraft.bearing;
             aircraft = mAircraft;
             break;
           }
@@ -748,7 +768,7 @@ public class ThreatsActivity extends DS1ServiceActivity {
       // Sort aircraft state vectors by priority
       newAircrafts.sort(Comparator.comparingInt(o -> o.priority));
 
-      mThreatsAdapter.setAircrafts(newAircrafts, () -> {
+      mAlertsAdapter.setAircraftAlerts(newAircrafts, () -> {
       });
     }, MESSAGE_TOKEN, 1);
   }

@@ -18,6 +18,6 @@
     <string name="default_aircrafts_user">user</string>
     <string name="key_aircrafts_password">NexusAircraftsPassword</string>
     <string name="default_aircrafts_password">password</string>
-    <string name="shortcut_threats_short_label">Nexus Threats</string>
+    <string name="shortcut_alerts_short_label">Nexus Alerts</string>
     <string name="shortcut_volume_short_label">DS1 Volume</string>
 </resources>

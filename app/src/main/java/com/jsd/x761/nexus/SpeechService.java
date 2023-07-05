@@ -134,7 +134,7 @@ public class SpeechService extends Service {
         mTextToSpeech.setSpeechRate(Configuration.AUDIO_SPEECH_RATE);
 
         // Register the notification sounds used to announce the various
-        // types of threats
+        // types of alerts
         String packageName = getPackageName();
         mTextToSpeech.addEarcon("[s1]", packageName, R.raw.s1);
         mTextToSpeech.addEarcon("[s2]", packageName, R.raw.s2);

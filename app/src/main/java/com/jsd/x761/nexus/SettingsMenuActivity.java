@@ -41,7 +41,7 @@ public class SettingsMenuActivity extends MenuActivity {
   protected void addMenuItems() {
     Log.i(TAG, "addMenuItems");
 
-    mArrayMenu.add("      Sources");
+    mArrayMenu.add("      Alert Sources");
     mIntentMenu.add(new ActivityConfiguration(null));
 
     mArrayMenu.add("        Radar Detector");
@@ -60,7 +60,7 @@ public class SettingsMenuActivity extends MenuActivity {
   @Override
   public void onBackPressed() {
     Log.i(TAG, "onBackPressed");
-    Intent intent = new Intent(this, ThreatsActivity.class);
+    Intent intent = new Intent(this, AlertsActivity.class);
     intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
     startActivity(intent);
     finish();

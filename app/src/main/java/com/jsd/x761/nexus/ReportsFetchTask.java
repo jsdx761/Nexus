@@ -139,22 +139,19 @@ public class ReportsFetchTask implements Runnable {
       }
     }
 
-    List<Threat> reports = new ArrayList<>();
+    List<Alert> reports = new ArrayList<>();
     try {
       JSONArray jsonReports = json.optJSONArray("alerts");
       if(jsonReports != null) {
         for(int i = 0; i < jsonReports.length(); i++) {
           JSONObject jsonReport = jsonReports.getJSONObject(i);
           try {
-            // Only keep reports of relevant types and within the configured
-            // distance
+            // Only keep reports of relevant types
             String type = jsonReport.getString("type");
             Log.i(TAG, String.format("report type %s", type));
             if("POLICE".equals(type) || "ACCIDENT".equals(type)) {
-              Threat report = Threat.fromReport(mLocation, jsonReport);
-              if(report.distance <= Configuration.REPORTS_MAX_DISTANCE || Configuration.DEBUG_INJECT_TEST_REPORTS) {
-                reports.add(report);
-              }
+              Alert report = Alert.fromReport(mLocation, jsonReport);
+              reports.add(report);
             }
           }
           catch(JSONException e) {
@@ -171,7 +168,7 @@ public class ReportsFetchTask implements Runnable {
     onDone(reports);
   }
 
-  protected void onDone(List<Threat> reports) {
+  protected void onDone(List<Alert> reports) {
     if(reports != null) {
       Log.i(TAG, String.format("onDone %d reports", reports.size()));
     }

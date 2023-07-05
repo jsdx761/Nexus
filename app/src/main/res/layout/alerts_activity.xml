@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:screenOrientation="portrait"
-    tools:context="com.jsd.x761.nexus.ThreatsActivity">
+    tools:context="com.jsd.x761.nexus.AlertsActivity">
 
     <ImageView
         android:id="@+id/ds1ConnectedImage"
@@ -73,7 +73,7 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/threatsRecyclerView"
+        android:id="@+id/alertsRecyclerView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginTop="72dp"
@@ -81,7 +81,7 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <ImageButton
-        android:id="@+id/threatsSettingsButton"
+        android:id="@+id/alertsSettingsButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="24dp"

@@ -156,7 +156,7 @@ public class AircraftsFetchTask implements Runnable {
       }
     }
 
-    List<Threat> aircrafts = new ArrayList<>();
+    List<Alert> aircrafts = new ArrayList<>();
     try {
       JSONArray jsonAircrafts = json.optJSONArray("states");
       if(jsonAircrafts != null) {
@@ -170,7 +170,7 @@ public class AircraftsFetchTask implements Runnable {
 
             String[] aircraftInfo = mAircraftsDatabase.getInterestingAircrafts().get(transponder);
             if(aircraftInfo != null) {
-              Threat aircraft = Threat.fromAircraft(mLocation, jsonAircraft, aircraftInfo);
+              Alert aircraft = Alert.fromAircraft(mLocation, jsonAircraft, aircraftInfo);
               if((!aircraft.onGround && aircraft.distance <= Configuration.AIRCRAFTS_MAX_DISTANCE) || Configuration.DEBUG_INJECT_TEST_AIRCRAFTS) {
                 aircrafts.add(aircraft);
               }
@@ -190,7 +190,7 @@ public class AircraftsFetchTask implements Runnable {
     onDone(aircrafts);
   }
 
-  protected void onDone(List<Threat> aircrafts) {
+  protected void onDone(List<Alert> aircrafts) {
     if(aircrafts != null) {
       Log.i(TAG, String.format("onDone %d aircrafts", aircrafts.size()));
     }

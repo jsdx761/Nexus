@@ -201,32 +201,37 @@ The first time you launch **Nexus** it'll request various permissions to
 access Bluetooth (to connect to your DS1 radar detector) and your location
 (to find crowd-sourced reports and aircrafts close to your location).
 
-The main menu provides the following options:
+The main screen of the app will show a combined list of **Alerts** from your
+DS1 radar detector, crowd-sourced reports, and surveillance aircrafts. You'll
+also get voice announcements on alerts and important events as they come up
+followed by regular sound reminders.
 
-* **Threats** - Select this to see a combined list of threats from your DS1
-  radar detector, crowd-sourced reports, and surveillance aircrafts; you will
-  need to configure the crowd-sourced reports and aircrafts under **Sources**
-  below to see those threats; you'll also get voice announcements on threats
-  and important events as they come up followed by regular sound reminders.
+Before you can see those alerts, you will need to go to Settings to select
+which types of alerts you're interested in, and to configure the connection
+to your DS1 radar detector, and the URLs of the crowd-sourced reports and
+aircrafts tracking servers you wish to use.
 
-* **Sources**
+The Settings menu provides the following options:
 
-  * **DS1 Radar** - Select this to scan for your DS1 radar detector; select
-    it once it shows in the list and the app will automatically connect to it
-    later on.
+* **Alerts Sources**
+
+  * **Radar Detector** - Select this to scan for your DS1 radar detector;
+    select it once it shows in the list and the app will automatically connect
+    to it later on.
+
+    * **Volume** - Select this to control the volume of your DS1 radar detector
+      directly from the app.
 
   * **Reports** - Select this to configure the URL of a crowd-sourced server
     similar to Waze for example; note that entering https://www.waze.com may
     work as Nexus uses a protocol similar to the Waze protocol, but make sure
     that doesn't violate the Waze terms of service in your country;
 
-  * **Aircrafts** - Select this to configure the URL of an aircraft report
-    server; if you are using the default aircraft info server
-    [https://opensky-network.org/](https://opensky-network.org/) enter
-    your OpenSky user info to get reports every few seconds instead of minutes.
-
-* **DS1 Volume** - Select this to control the volume of your DS1 radar detector
-  directly from the app.
+  * **Aircrafts** - Select this to configure the URL of an aircraft tracking
+    server; if you are using the default server
+    [https://opensky-network.org/](https://opensky-network.org/), entering
+    your OpenSky user info will allow you to get reports every few seconds
+    instead of minutes.
 
 Voice announcements and sound notifications play on the phone's **Voice call**
 audio stream. You will need to select your phone's Bluetooth as audio source

@@ -22,21 +22,22 @@ package com.jsd.x761.nexus;
  */
 public class Configuration {
 
+  public static final boolean DEBUG = true;
   public static final long SPLASH_TIMER = 2000;
   public static final String DS1_SERVICE_SCAN_NAME = "DS1@E1";
-  public static final long DS1_SERVICE_SCAN_TIMER = 10000;
   public static final long DS1_SERVICE_CONNECT_WAIT_TIMER = 3000;
   public static final long DS1_SERVICE_SETUP_TIMER = 1000;
   public static final long DS1_SERVICE_RECONNECT_TIMER = 5000;
-  public static final boolean ENABLE_ALERTS = true;
-  public static final long ALERTS_CLEAR_TIMER = 6000;
-  public static final long ABANDON_AUDIO_TIMER = 0;
-  public static final int ALERTS_MAX_ANNOUNCE_COUNT = 3;
+  public static final long CLEAR_REMINDER_TIMER = 10000;
+  public static final boolean ENABLE_RADAR_ALERTS = true;
+  public static final long ALERTS_CLEAR_TIMER = 10000;
+  public static final int RADAR_ALERTS_MAX_SPEECH_ANNOUNCES = DEBUG? 1 : 3;
+  public static final int RADAR_ALERTS_MAX_EARCON_ANNOUNCES = DEBUG? 1 : 3;
   public static final int AUDIO_ADJUST_RAISE_COUNT = 0;
   public static final float AUDIO_SPEECH_PITCH = 0.95f;
   public static final float AUDIO_SPEECH_RATE = 1.1f;
-  public static final long AUDIO_EARCON_TIMER = 190;
-  public static final long CURRENT_LOCATION_TIMER = 4000;
+  public static final long AUDIO_EARCON_TIMER = 250;
+  public static final long CURRENT_LOCATION_TIMER = 10000;
   public static final boolean USE_COMPUTED_LOCATION_BEARING = true;
   public static final float COMPUTED_BEARING_DISTANCE_THRESHOLD = 20.0f;
   public static final boolean ENABLE_REPORTS = true;
@@ -47,16 +48,11 @@ public class Configuration {
   public static final long AIRCRAFTS_INITIAL_CHECK_TIMER = 1000;
   public static final long AIRCRAFTS_ANONYMOUS_CHECK_TIMER = 240000;
   public static final long AIRCRAFTS_AUTHENTICATED_CHECK_TIMER = 24000;
-
-  public static final boolean DEBUG = false;
   public static final boolean DEBUG_USE_NULL_DS1_SERVICE = DEBUG;
   public static final long DEBUG_NULL_DS1_SERVICE_SCAN_TIMER = 2000;
   public static final boolean DEBUG_INJECT_TEST_ALERTS = DEBUG;
-  public static final int DEBUG_TEST_ALERTS_REPEAT_COUNT = 3;
-  public static final long DEBUG_TEST_ALERTS_REPEAT_TIMER = 50;
   public static final boolean DEBUG_INJECT_TEST_BACKGROUND_ALERTS = false;
   public static final long DEBUG_TEST_BACKGROUND_ALERTS_TIMER = 20000;
-  public static final boolean DEBUG_REFRESH_ALERTS_ONLY = DEBUG;
 
   public static final String[] DEBUG_TEST_ALERTS = DEBUG_INJECT_TEST_ALERTS ? new String[]{
     "1,123,KA,10,456,34.7,F,1",
@@ -70,8 +66,11 @@ public class Configuration {
   public static final boolean DEBUG_ANNOUNCE_VEHICLE_BEARING = false;
   public static final boolean DEBUG_INJECT_TEST_REPORTS = DEBUG;
   public static final float REPORTS_MAX_DISTANCE = DEBUG ? 50.0f : 2.0f;
-  public static final float REPORTS_REMINDER_DISTANCE = DEBUG ? 7.0f : 1.0f;
-  public static final int REPORTS_MAX_ANNOUNCE_COUNT = 3;
+  public static final long REPORTS_REMINDER_TIMER = 60000;
+  public static final float REPORTS_REMINDER_DISTANCE = 0.25f;
+  public static final int REPORTS_REMINDER_BEARING = 3;
+  public static final int REPORTS_MAX_SPEECH_ANNOUNCES = 3;
+  public static final int REPORTS_MAX_EARCON_ANNOUNCES = 1;
 
   public static final String DEBUG_TEST_REPORTS = DEBUG_INJECT_TEST_REPORTS ? """
       {
@@ -162,8 +161,11 @@ public class Configuration {
 
   public static final boolean DEBUG_INJECT_TEST_AIRCRAFTS = DEBUG;
   public static final float AIRCRAFTS_MAX_DISTANCE = DEBUG ? 50.0f : 5.0f;
-  public static final float AIRCRAFTS_REMINDER_DISTANCE = DEBUG ? 10.0f : 2.0f;
-  public static final int AIRCRAFTS_MAX_ANNOUNCE_COUNT = 3;
+  public static final long AIRCRAFTS_REMINDER_TIMER = 60000;
+  public static final float AIRCRAFTS_REMINDER_DISTANCE = 1.0f;
+  public static final float AIRCRAFTS_REMINDER_BEARING = 3;
+  public static final int AIRCRAFTS_MAX_SPEECH_ANNOUNCES = 3;
+  public static final int AIRCRAFTS_MAX_EARCON_ANNOUNCES = 1;
 
   // The following test transponder icao24 addresses correspond to interesting
   // aircrafts in the aircrafts database
