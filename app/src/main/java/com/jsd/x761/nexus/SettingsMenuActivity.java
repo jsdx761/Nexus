@@ -50,10 +50,10 @@ public class SettingsMenuActivity extends MenuActivity {
     mArrayMenu.add("          Volume");
     mIntentMenu.add(new ActivityConfiguration(DS1VolumeActivity.class));
 
-    mArrayMenu.add("        Reports");
+    mArrayMenu.add("        Crowd-sourced Alerts");
     mIntentMenu.add(new ActivityConfiguration(ReportsSettingsActivity.class));
 
-    mArrayMenu.add("        Aircrafts");
+    mArrayMenu.add("        Aircraft Alerts");
     mIntentMenu.add(new ActivityConfiguration(AircraftsSettingsActivity.class));
   }
 

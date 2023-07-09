@@ -305,10 +305,7 @@ public class Alert {
       return true;
     }
     int bearingDelta = Geospatial.getRelativeBearing(announceBearing, bearing);
-    if(bearingDelta >= Configuration.REPORTS_REMINDER_BEARING && bearingDelta <= 12 - Configuration.REPORTS_REMINDER_BEARING) {
-      return true;
-    }
-    return false;
+    return bearingDelta >= Configuration.REPORTS_REMINDER_BEARING && bearingDelta <= 12 - Configuration.REPORTS_REMINDER_BEARING;
   }
 
   /**
@@ -465,10 +462,7 @@ public class Alert {
       return true;
     }
     int bearingDelta = Geospatial.getRelativeBearing(announceBearing, bearing);
-    if(bearingDelta >= Configuration.AIRCRAFTS_REMINDER_BEARING && bearingDelta <= 12 - Configuration.AIRCRAFTS_REMINDER_BEARING) {
-      return true;
-    }
-    return false;
+    return bearingDelta >= Configuration.AIRCRAFTS_REMINDER_BEARING && bearingDelta <= 12 - Configuration.AIRCRAFTS_REMINDER_BEARING;
   }
 
   public String toDebugString() {

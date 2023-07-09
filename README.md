@@ -10,12 +10,12 @@ A fork of the **Radenso Nexus** Android app at
 I was looking for a simple Android companion app for my [Radenso DS1 radar detector](https://radenso.com/products/radenso-ds1)
 with an integrated user experience and the following features:
 
-* Radar detector alerts, crowd-sourced reports, and alerts about potential
+* Radar detector alerts, crowd-sourced alerts, and alerts about potential
   surveillance aircrafts all combined in a single prioritized list;
 * Voice announcements with a soft relaxing voice matching the UK sounding
   voice of my Jaguar builtin car navigation system;
-* Non-stressful sound notification follow-up reminders for alerts in range
-  after the original voice announcements;
+* Non-stressful sound notification reminders for alerts in range after the
+  original voice announcements;
 * Announcements of important device, network, and location status;
 * Reliable audio stream ducking with my phone and car setup to be able to
   listen to music over Bluetooth and still get clear voice announcements
@@ -27,15 +27,15 @@ user experience.
 
 I had tried various combinations of existing apps with mixed results:
 * [Radenso Nexus](https://play.google.com/store/apps/details?id=com.noLimits.TheiaNexus) -
-  missing voice, crowded-sourced reports, or aircrafts;
+  missing voice, crowded-sourced alerts, or aircraft alerts;
 * [JBV1](https://play.google.com/store/apps/details?id=com.johnboysoftware.jbv1) -
-  missing DS1 support, voice and audio conflicts with other apps, annoying
-  notifications when losing cell connection;
+  missing DS1 support, had voice and audio conflicts with other apps, and
+  annoying notifications when losing cell connection;
 * [Highway Radar](https://play.google.com/store/apps/details?id=com.highwayradar.app) -
   issues with audio stream ducking and blending;
 * [Waze](https://play.google.com/store/apps/details?id=com.waze) - short
-  distances for crowd-sourced reports, and requiring a navigation route to get
-  those reports.
+  distances for crowd-sourced alerts, and requiring a navigation route to get
+  voice announcements of the alerts.
 
 Then I found Radenso's open-source code of the **Radenso Nexus** app on Github
 here:
@@ -45,20 +45,20 @@ The code looked reasonable to me so I forked it, removed what I didn't need to
 simplify things and added the voice and alerting features I wanted.
 
 I renamed the app **Nexus** from **Radenso Nexus** to make it clear that it's
-a fork and not the original app from Radenso. Great thanks to Radenso for a
-nice job with the original codebase by the way!
+a fork with siginificant changes and not the original app from Radenso. Many
+thanks to Radenso for a nice job with the original codebase by the way!
 
 **Nexus** is barebones compared to the more sophisticated apps out there like
-JBV1 or Highway Radar, but does just what I need and I'm hoping others will
-find it useful as well.
+JBV1 or Highway Radar, but now does just what I needed and I'm hoping others
+will find it useful as well.
 
 The original code from Radenso has been ported to a recent Android SDK and
 Android 13, refactored and commented to make it easier to work with. The
-implementation of the voice announcements, crowd-sourced reports, and
+implementation of the voice announcements, crowd-sourced alerts, and
 detection of surveillance aircrafts are just a little bit of code on top of
 the original codebase.
 
-Most of the preferences (timers for fetching reports, distance thresholds,
+Most of the preferences (timers for fetching alerts, distance thresholds,
 speech rate and pitch, various internal settings, test data etc) are defined
 as constants in Configuration.java and should be easy to adjust if needed.
 
@@ -74,6 +74,7 @@ This section assumes that you're familiar with Android app development using
 Java, the Android SDK, and Gradle on Linux or MacOS. The steps described here
 are known to work with the following environment and requirements:
 ```
+Android 13 on a Pixel 7
 Android SDK Platform Tools v34
 Android SDK v34
 Java Open JDK v17
@@ -81,8 +82,8 @@ Java Open JDK v17
 
 ### Downloading aircraft databases
 
-**Nexus** can optionally recognize potential surveillance aircrafts. If you
-don't need that capability, skip this section and move on to the
+**Nexus** can optionally detect potential surveillance aircrafts. If you
+don't need that capability, you can skip this section and move on to the
 **Assembling the app** section.
 
 To collect up-to-date public aircraft information databases and include a
@@ -130,7 +131,7 @@ To assemble the **Nexus** app, run the following commands:
 ./gradlew build
 ```
 
-You should see the following:
+After the build completes, you should see the following:
 ```
 BUILD SUCCESSFUL
 ```
@@ -170,7 +171,7 @@ Success
 original **Radenso Nexus** app as it has a different name so you can keep
 both apps on the phone if needed.
 
-### Using Android Studio
+# Using Android Studio
 
 If you prefer to use the Android Studio IDE to build and install the app, open
 the Nexus directory as a project in Android Studio and go from there with the
@@ -191,55 +192,60 @@ using any of the usual techniques for installing APKs on an Android device.
 # Using the Nexus app
 
 **Nexus** is a variation of the original **Radenso Nexus** app. It primarily
-adds voice announcements, crowd-sourced reports, and alerts about potential
+adds voice announcements, crowd-sourced alerts, and alerts about potential
 surveillance aircrafts on top of the original DS1 radar detector alerts.
 
 Note that the original DS1 radar detector settings screens have been removed
-to help simplify the app. Use the original Radenso app when you need those.
+to help simplify the app. Use the original app from Radenso when you need
+those.
 
 The first time you launch **Nexus** it'll request various permissions to
-access Bluetooth (to connect to your DS1 radar detector) and your location
-(to find crowd-sourced reports and aircrafts close to your location).
+access Bluetooth (to find and connect to your DS1 radar detector) and your
+location (to look for crowd-sourced alerts and aircrafts close to your
+location).
 
 The main screen of the app will show a combined list of **Alerts** from your
-DS1 radar detector, crowd-sourced reports, and surveillance aircrafts. You'll
-also get voice announcements on alerts and important events as they come up
-followed by regular sound reminders.
+DS1 radar detector, about crowd-sourced alerts, and potential surveillance
+aircrafts. You'll also get voice announcements of those alerts and important
+status events as they come up, followed by regular sound reminders.
 
-Before you can see those alerts, you will need to go to Settings to select
-which types of alerts you're interested in, and to configure the connection
-to your DS1 radar detector, and the URLs of the crowd-sourced reports and
-aircrafts tracking servers you wish to use.
+Before you can see any alerts on the main screen, you will need to go to the
+**Settings** screen to select which types of alerts you're interested in, and
+configure the connection to your DS1 radar detector, and the URLs of the
+crowd-sourced alerts and aircrafts tracking servers you wish to use.
 
-The Settings menu provides the following options:
+The **Settings** menu provides the following options:
 
-* **Alerts Sources**
+* **Alert Sources**
 
   * **Radar Detector** - Select this to scan for your DS1 radar detector;
     select it once it shows in the list and the app will automatically connect
     to it later on.
 
     * **Volume** - Select this to control the volume of your DS1 radar detector
-      directly from the app.
+      directly from the app. I typically set it to 0 if I'm going to be using
+      the voice and sound alerts from the app.
 
-  * **Reports** - Select this to configure the URL of a crowd-sourced server
-    similar to Waze for example; note that entering https://www.waze.com may
-    work as Nexus uses a protocol similar to the Waze protocol, but make sure
-    that doesn't violate the Waze terms of service in your country;
+  * **Crowd-sourced Reports** - Select this to configure the URL of a
+    crowd-sourced server similar to Waze for example; note that entering
+    https://www.waze.com may work as Nexus uses a protocol similar to the
+    Waze protocol, but make sure that doesn't violate the Waze terms of
+    service in your country;
 
-  * **Aircrafts** - Select this to configure the URL of an aircraft tracking
-    server; if you are using the default server
+  * **Aircraft Alerts** - Select this to configure the URL of an aircraft
+    tracking server; if you are using the default server
     [https://opensky-network.org/](https://opensky-network.org/), entering
-    your OpenSky user info will allow you to get reports every few seconds
+    your OpenSky user info will allow you to get alerts every few seconds
     instead of minutes.
 
-Voice announcements and sound notifications play on the phone's **Voice call**
-audio stream. You will need to select your phone's Bluetooth as audio source
-in the vehicle, then if you stream music the app will duck  music as
-needed so you can clearly hear the announcements. Most Android phones let you
-set separate volumes for the music **Media** and **Voice call** streams, so
-you should be able to control how loud you want the voice announcements to be
-over your music.
+Voice announcements and sound notifications will play on the phone's
+**Voice call** audio stream. You will need to select your phone's Bluetooth as
+audio source in the vehicle, then if you stream music for example the app
+will duck the music as needed so you can clearly hear the announcements.
+
+Most Android phones let you set separate volumes for the music **Media** and
+**Voice call** streams, so you should be able to control how loud you want the
+voice announcements to be over your music.
 
 # Sample screens and audio
 
@@ -247,18 +253,17 @@ TODO add screenshots and maybe recordings of the audio experience here
 
 # Limitations
 
-TODO describe some of the limitations of the report selection and aircraft
-recognition detection algorithms, and how the app just relies on the DS1 radar
-detector for filtering etc and doesn't do all the additional smarts that you
-get with the other apps out there.
+TODO describe some of the limitations of the alert selection and aircraft
+detection algorithms, and how the app just relies on the DS1 radar detector
+for filtering etc and doesn't do all the additional smarts that you get with
+the other apps out there.
 
 # Disclaimers
 
 This is a personal weekend project on my personal time not related in any way
-with whatever software development work I may do for whoever I work for on my
-day job.
+with whatever I may do for whoever I may work for on my day job.
 
-Do not use the app to violate the terms of service of any crowd-sourced report
+Do not use the app to violate the terms of service of any crowd-sourced alert
 server you decide to use (e.g. Waze).
 
 # Resources
@@ -285,12 +290,29 @@ A list of public resources that helped build the app:
 
 [Geospatial formulas for distance, bearing etc](https://www.movable-type.co.uk/scripts/latlong.html)
 
-# A random list of ideas
+# A few more ideas
 
-A few more ideas:
+A few more ideas of potential future additions to the app:
 
-* Use an ADS-B radio receiver to get aircraft information instead of relying
-on an Internet connection;
+* Use a Software Defined Radio dongle, a Raspberry Pi, and tools like
+**dump1090** and **dump978** to detect aircrafts instead of having to rely on
+a working Internet connection to a server like OpenSky;
 
-* Alert when recognizing interesting P25 radio communication in range.
+* Alert when detecting radio communication on certain public safety
+frequencies, in particular 138Mhz-174Mhz, 380Mhz-512Mhz, 769Mhz-824Mhz and
+851Mhz-869Mhz using a fast power spectrum tool like **rtl-power-fftw**; the
+app wouldn't record or attempt to decrypt the communication, it'd just alert
+on detecting radio power patterns over a baseline.
+
+All the radio detection work would happen on the Raspberry Pi, and the Android
+app would receive alerts from it using a simple data protocol over Bluetooth
+Low Energy similar to how it communicates with the DS1 radar detector.
+
+Links to working forks of those tools:
+
+[dump1090](https://github.com/jsdx761/dump1090)
+
+[dump978](https://github.com/jsdx761/dump978)
+
+[rtl-power-fftw](https://github.com/jsdx761/rtl-power-fftw)
 

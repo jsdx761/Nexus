@@ -46,7 +46,7 @@ public class AlertsAdapter extends RecyclerView.Adapter<AlertsAdapter.ViewHolder
   public static final String MESSAGE_TOKEN = AlertsActivity.MESSAGE_TOKEN;
 
   private final AlertsActivity mActivity;
-  private SpeechService mSpeechService;
+  private final SpeechService mSpeechService;
   private final Handler mHandler = new Handler(Looper.getMainLooper());
   private final List<Alert> mRadarAlerts = new ArrayList<>();
   private final List<Alert> mReportAlerts = new ArrayList<>();
@@ -54,12 +54,15 @@ public class AlertsAdapter extends RecyclerView.Adapter<AlertsAdapter.ViewHolder
   private final List<Alert> mItems = new ArrayList<>();
   private Runnable mReportsReminderTask;
   private Runnable mAircraftsReminderTask;
-  private boolean mAllClear = true;
+  private final String mReportsSourceName;
+  private boolean mReportsAllClear = true;
+  private boolean mAircraftsAllClear = true;
   private Runnable mAllClearTask;
 
-  public AlertsAdapter(AlertsActivity activity) {
+  public AlertsAdapter(AlertsActivity activity, SpeechService speechService, String reportsSourceName) {
     mActivity = activity;
-    mSpeechService = activity.getSpeechService();
+    mSpeechService = speechService;
+    mReportsSourceName = reportsSourceName;
 
     // Play reminders regularly while there are active reports and aircraft
     // state vectors
@@ -112,9 +115,15 @@ public class AlertsAdapter extends RecyclerView.Adapter<AlertsAdapter.ViewHolder
     mHandler.postDelayed(mAircraftsReminderTask, MESSAGE_TOKEN, Configuration.AIRCRAFTS_REMINDER_TIMER);
 
     mAllClearTask = () -> {
-      if(mItems.size() == 0 && !mAllClear) {
-        mAllClear = true;
-        mSpeechService.announceEvent("All clear", () -> {});
+      if(mReportAlerts.size() == 0 && !mReportsAllClear) {
+        mReportsAllClear = true;
+        mSpeechService.announceEvent(String.format("%s alerts are all clear now", mReportsSourceName), () -> {
+        });
+      }
+      if(mAircraftAlerts.size() == 0 && !mAircraftsAllClear) {
+        mAircraftsAllClear = true;
+        mSpeechService.announceEvent("Aircraft alerts are all clear now", () -> {
+        });
       }
       mHandler.postDelayed(mAllClearTask, MESSAGE_TOKEN, Configuration.CLEAR_REMINDER_TIMER);
     };
@@ -327,36 +336,36 @@ public class AlertsAdapter extends RecyclerView.Adapter<AlertsAdapter.ViewHolder
     String alertClass = "";
     switch(alert.alertClass) {
       case Alert.ALERT_CLASS_RADAR:
-         alertClass = "Radar";
+        alertClass = "Radar";
         break;
       case Alert.ALERT_CLASS_LASER:
-         alertClass = "Laser";
+        alertClass = "Laser";
         break;
       case Alert.ALERT_CLASS_SPEED_CAM:
-         alertClass = "Speed Cam";
+        alertClass = "Speed Cam";
         break;
       case Alert.ALERT_CLASS_RED_LIGHT_CAM:
-         alertClass = "Red Light Cam";
+        alertClass = "Red Light Cam";
         break;
       case Alert.ALERT_CLASS_USER_MARK:
-         alertClass = "User Mark";
+        alertClass = "User Mark";
         break;
       case Alert.ALERT_CLASS_LOCKOUT:
-         alertClass = "Lockout";
+        alertClass = "Lockout";
         break;
       case Alert.ALERT_CLASS_REPORT:
         if("POLICE".equals(alert.type)) {
-           alertClass = "Speed Trap";
+          alertClass = "Speed Trap";
         }
         else if("ACCIDENT".equals(alert.type)) {
-           alertClass = "Accident";
+          alertClass = "Accident";
         }
         else {
-           alertClass = "Hazard";
+          alertClass = "Hazard";
         }
         break;
       case Alert.ALERT_CLASS_AIRCRAFT:
-         alertClass = alert.type;
+        alertClass = alert.type;
         break;
     }
 
@@ -381,13 +390,13 @@ public class AlertsAdapter extends RecyclerView.Adapter<AlertsAdapter.ViewHolder
         DecimalFormat df = new DecimalFormat("0.#");
         speech += String.format(" %s", df.format(alert.frequency));
       }
-      speech += String.format(" %s",  alertClass);
+      speech += String.format(" %s", alertClass);
     }
     else if(alert.alertClass == Alert.ALERT_CLASS_REPORT) {
       // For crowd-sourced reports, the speech announce includes the class
       // of alert, the direction in clock bearing form, the distance and the
       // reported street or city
-      speech +=  alertClass;
+      speech += alertClass;
       if(alert.announced > 1) {
         speech += " now";
       }
@@ -419,7 +428,7 @@ public class AlertsAdapter extends RecyclerView.Adapter<AlertsAdapter.ViewHolder
         String manufacturer = alert.manufacturer.substring(0, 1).toUpperCase() + alert.manufacturer.substring(1).toLowerCase();
         speech += String.format(" %s", manufacturer);
       }
-      speech += String.format(" %s",  alertClass);
+      speech += String.format(" %s", alertClass);
       if(alert.announced > 1) {
         speech += " now";
       }
@@ -434,7 +443,7 @@ public class AlertsAdapter extends RecyclerView.Adapter<AlertsAdapter.ViewHolder
     else {
       // For other classes of alerts, the speech announce just includes
       // the alert class
-      speech +=  alertClass;
+      speech += alertClass;
     }
 
     String uuid = UUID.randomUUID().toString();
@@ -496,7 +505,6 @@ public class AlertsAdapter extends RecyclerView.Adapter<AlertsAdapter.ViewHolder
         }
       }
       if(announces.size() != 0) {
-        mAllClear = false;
 
         // Request audio focus and duck current audio
         Log.i(TAG, "requestAudioFocus()");
@@ -534,6 +542,8 @@ public class AlertsAdapter extends RecyclerView.Adapter<AlertsAdapter.ViewHolder
     mActivity.runOnUiThread(() -> notifyDataSetChanged());
 
     if(mReportAlerts.size() > 0) {
+      mReportsAllClear = false;
+
       // Announce the reports if they've not been announced yet or if their
       // distance or bearing has changed significantly since then
       List<Alert> announces = new ArrayList<>();
@@ -547,7 +557,6 @@ public class AlertsAdapter extends RecyclerView.Adapter<AlertsAdapter.ViewHolder
       }
 
       if(announces.size() != 0) {
-        mAllClear = false;
 
         // Reschedule the reminder task for later as some reports are going
         // to be announced right away
@@ -590,6 +599,8 @@ public class AlertsAdapter extends RecyclerView.Adapter<AlertsAdapter.ViewHolder
     mActivity.runOnUiThread(() -> notifyDataSetChanged());
 
     if(mAircraftAlerts.size() > 0) {
+      mAircraftsAllClear = false;
+
       // Announce the aircrafts if they've not been announced yet or if their
       // distance or bearing has changed significantly since then
       List<Alert> announces = new ArrayList<>();
@@ -603,7 +614,6 @@ public class AlertsAdapter extends RecyclerView.Adapter<AlertsAdapter.ViewHolder
       }
 
       if(announces.size() != 0) {
-        mAllClear = false;
 
         // Reschedule the reminder task for later as some reports are going
         // to be announced right away

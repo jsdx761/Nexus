@@ -43,7 +43,7 @@ public class ReportsSettingsActivity extends AppCompatActivity {
     Log.i(TAG, "onCreate");
     super.onCreate(b);
 
-    setTitle("Reports");
+    setTitle("Crowd-sourced Alerts");
 
     setContentView(R.layout.reports_settings_activity);
     Switch useReportsSwitch = findViewById(R.id.useReportsSwitch);

@@ -186,7 +186,8 @@ public class SpeechService extends Service {
     }
 
     mDuckedAudioMedia = 0;
-    abandonAudioFocus(() -> {});
+    abandonAudioFocus(() -> {
+    });
   }
 
   public void requestAudioFocus(Runnable onDone) {
@@ -257,7 +258,7 @@ public class SpeechService extends Service {
   }
 
   public void announceEvent(String event, Runnable onDone) {
-    Log.i(TAG, "announceEvent");
+    Log.i(TAG, String.format("announceEvent %s", event));
 
     // Request audio focus
     Log.i(TAG, "requestAudioFocus()");

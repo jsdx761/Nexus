@@ -87,14 +87,12 @@ public class DS1ServiceActivity extends AppCompatActivity {
   }
 
   protected void bindDS1Service(Runnable onDone) {
-    if(!mDS1ServiceEnabled) {
-      mHandler.postDelayed(onDone, DS1ServiceActivity.MESSAGE_TOKEN, 1);
-      return;
-    }
-
+    Log.i(TAG, "bindDS1Service");
     // Report that the DS1 device is not connected if connection doesn't
     // complete after a few seconds
     Runnable notConnectedTask = () -> {
+      Log.i(TAG, "notConnectedTask");
+      Log.i(TAG, "sendBroadcast() DS1_DISCONNECTED");
       sendBroadcast(new Intent(DS1Service.DS1_DISCONNECTED));
     };
     mHandler.postDelayed(notConnectedTask, MESSAGE_TOKEN, Configuration.DS1_SERVICE_CONNECT_WAIT_TIMER);
@@ -201,6 +199,7 @@ public class DS1ServiceActivity extends AppCompatActivity {
   }
 
   private void refreshDS1Service() {
+    Log.i(TAG, "refreshDS1Service");
     mHandler.removeCallbacksAndMessages(MESSAGE_TOKEN);
     if(mDS1Receiver != null) {
       unregisterReceiver(mDS1Receiver);
@@ -215,7 +214,9 @@ public class DS1ServiceActivity extends AppCompatActivity {
       unbindService(mDS1ServiceConnection);
     }
     mDS1DeviceDisconnected = false;
+    Log.i(TAG, "refreshDS1Service bindDS1Service()");
     bindDS1Service(() -> {
+      Log.i(TAG, "refreshDS1Service bindDS1Service.onDone");
     });
   }
 
@@ -223,8 +224,6 @@ public class DS1ServiceActivity extends AppCompatActivity {
     mHandler.removeCallbacks(mRefreshDS1DeviceTask);
     mHandler.postDelayed(mRefreshDS1DeviceTask, MESSAGE_TOKEN, Configuration.DS1_SERVICE_RECONNECT_TIMER);
   }
-
-  ;
 
   @Override
   protected void onDestroy() {

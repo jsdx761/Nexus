@@ -13,7 +13,7 @@
         android:paddingBottom="20dp"
         android:layout_marginStart="24dp"
         android:screenOrientation="portrait"
-        android:text="Use crowd-sourced reports"
+        android:text="Use crowd-sourced alerts"
         android:textSize="16sp"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent" />

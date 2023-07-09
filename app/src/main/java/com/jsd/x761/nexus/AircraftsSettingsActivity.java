@@ -43,7 +43,7 @@ public class AircraftsSettingsActivity extends AppCompatActivity {
     Log.i(TAG, "onCreate");
     super.onCreate(b);
 
-    setTitle("Aircrafts");
+    setTitle("Aircraft Alerts");
 
     setContentView(R.layout.aircrafts_settings_activity);
     Switch useAircraftsSwitch = findViewById(R.id.useAircraftsSwitch);

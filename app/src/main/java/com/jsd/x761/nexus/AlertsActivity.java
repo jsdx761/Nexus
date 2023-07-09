@@ -27,8 +27,6 @@ import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.location.Location;
-import android.net.ConnectivityManager;
-import android.net.Network;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -48,10 +46,11 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.Priority;
-import com.google.android.gms.tasks.Task;
 import com.jsd.x761.nexus.Nexus.R;
 import com.nolimits.ds1library.DS1Service;
 
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -70,26 +69,32 @@ public class AlertsActivity extends DS1ServiceActivity {
   private AlertsAdapter mAlertsAdapter;
   private ServiceConnection mSpeechServiceConnection;
   private SpeechService mSpeechService;
+  private boolean mBoundSpeechService;
   private Runnable mClearDS1AlertsTask;
-  private ConnectivityManager mConnectivityManager;
   private SharedPreferences mSharedPreferences;
   private Runnable mDebugBackgroundAlertsTask;
   private ImageView mLocationActiveImage;
   RecyclerView mAlertsRecyclerView;
   private FusedLocationProviderClient mLocationClient;
+  private LocationRequest mLocationRequest;
   private LocationCallback mLocationCallback;
+  private Runnable mOnGetInitialLocationTask;
   private Location mLastLocation;
   private Location mLocation;
+  private float mBearing = 0.0f;
   private boolean mLocationActive;
+  private Runnable mLocationNotAvailableTask;
+  private ImageView mNetworkConnectedImage;
+  private boolean mNetworkConnected = true;
+  private Runnable mNetworkCheckTask;
+  private Executor mNetworkCheckTaskExecutor;
   private boolean mReportsEnabled;
   private ImageView mReportsActiveImage;
   private String mReportsSourceURL;
+  private String mReportsSourceName;
   private int mReportsActive;
   private Executor mReportsFetchTaskExecutor;
   private Runnable mCheckForReportsTask;
-  private ImageView mNetworkConnectedImage;
-  private boolean mNetworkConnected = true;
-  private float mBearing = 0.0f;
   private boolean mAircraftsEnabled;
   private ImageView mAircraftsActiveImage;
   private AircraftsDatabase mAircraftsDatabase;
@@ -100,6 +105,7 @@ public class AlertsActivity extends DS1ServiceActivity {
   private String mAircraftsUser;
   private String mAircraftsPassword;
 
+  @SuppressLint("MissingPermission")
   @Override
   protected void onCreate(Bundle b) {
     Log.i(TAG, "onCreate");
@@ -117,186 +123,189 @@ public class AlertsActivity extends DS1ServiceActivity {
     mAlertsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
     mSharedPreferences = getSharedPreferences(getString(R.string.preference_file_key), Context.MODE_PRIVATE);
+    mReportsEnabled = mSharedPreferences.getBoolean(getString(R.string.key_reports_enabled), false);
+    mReportsSourceURL = mSharedPreferences.getString(getString(R.string.key_reports_url), getString(R.string.default_reports_url));
+    try {
+      String[] parts = new URL(mReportsSourceURL).getHost().split("\\.");
+      mReportsSourceName = parts[parts.length - 2];
+      mReportsSourceName = mReportsSourceName.substring(0, 1).toUpperCase() + mReportsSourceName.substring(1).toLowerCase();
+    }
+    catch(Exception e) {
+      mReportsSourceName = "Crowd-sourced";
+    }
+    mAircraftsEnabled = mSharedPreferences.getBoolean(getString(R.string.key_aircrafts_enabled), false);
+    mAircraftsSourceURL = mSharedPreferences.getString(getString(R.string.key_aircrafts_url), getString(R.string.default_aircrafts_url));
+    mAircraftsUser = mSharedPreferences.getString(getString(R.string.key_aircrafts_user), getString(R.string.default_aircrafts_user));
+    if(mAircraftsUser.equals(getString(R.string.default_aircrafts_user))) {
+      mAircraftsUser = "";
+    }
+    mAircraftsPassword =
+      mSharedPreferences.getString(getString(R.string.key_aircrafts_password), getString(R.string.default_aircrafts_password));
+    if(mAircraftsPassword.equals(getString(R.string.default_aircrafts_password))) {
+      mAircraftsPassword = "";
+    }
 
     mLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
-    mConnectivityManager = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
-
+    mNetworkCheckTaskExecutor = Executors.newSingleThreadExecutor();
     mReportsFetchTaskExecutor = Executors.newSingleThreadExecutor();
     mAircraftsFetchTaskExecutor = Executors.newSingleThreadExecutor();
 
     // Bind to the speech service
     Log.i(TAG, "bindSpeechService()");
-    bindSpeechService(new Runnable() {
-      @Override
-      public void run() {
-        Log.i(TAG, "bindSpeechService.onDone");
+    bindSpeechService(() -> {
+      Log.i(TAG, "bindSpeechService.onDone");
 
-        // Bind to the DS1 service
-        Log.i(TAG, "bindDS1Service()");
-        bindDS1Service(new Runnable() {
-          @SuppressLint("MissingPermission")
-          @Override
-          public void run() {
+      if(Configuration.ENABLE_RADAR_ALERTS) {
+        if(mDS1ServiceEnabled) {
+          // Bind to the DS1 service
+          Log.i(TAG, "bindDS1Service()");
+          bindDS1Service(() -> {
             Log.i(TAG, "bindDS1Service.onDone");
-            // Both services are now available, proceed with setup
-
-            if(Configuration.ENABLE_RADAR_ALERTS && Configuration.DEBUG_INJECT_TEST_BACKGROUND_ALERTS) {
+            if(Configuration.DEBUG_INJECT_TEST_BACKGROUND_ALERTS) {
               // Inject test background DS1 alerts every few seconds to help
               // test the app without having to use an actual DS1 device
               // everytime
               Log.i(TAG, "using test background DS1 alerts");
-              mDebugBackgroundAlertsTask = new Runnable() {
-                @Override
-                public void run() {
-                  try {
-                    onDS1DeviceData();
-                  }
-                  finally {
-                    mHandler.postDelayed(this, MESSAGE_TOKEN, Configuration.DEBUG_TEST_BACKGROUND_ALERTS_TIMER);
-                  }
+              mDebugBackgroundAlertsTask = () -> {
+                try {
+                  onDS1DeviceData();
+                }
+                finally {
+                  mHandler.postDelayed(mDebugBackgroundAlertsTask, MESSAGE_TOKEN, Configuration.DEBUG_TEST_BACKGROUND_ALERTS_TIMER);
                 }
               };
               mHandler.postDelayed(mDebugBackgroundAlertsTask, MESSAGE_TOKEN, 1);
             }
+          });
+        }
+      }
 
-            // Check if crowd-sourced reports are enabled
-            if(Configuration.ENABLE_REPORTS) {
-              mReportsEnabled = mSharedPreferences.getBoolean(getString(R.string.key_reports_enabled), false);
-              mReportsSourceURL = mSharedPreferences.getString(getString(R.string.key_reports_url), getString(R.string.default_reports_url));
-              if(Configuration.DEBUG_INJECT_TEST_REPORTS || (mReportsEnabled && !mReportsSourceURL.equals(getString(R.string.default_reports_url)))) {
-                mReportsActive = 1;
+      // Check if crowd-sourced reports are enabled
+      if(Configuration.ENABLE_REPORTS) {
+        if(Configuration.DEBUG_INJECT_TEST_REPORTS || (mReportsEnabled && !mReportsSourceURL.equals(getString(R.string.default_reports_url)))) {
+          mReportsActive = 1;
+        }
+      }
+
+      // Check if aircraft recognition is enabled
+      if(Configuration.ENABLE_AIRCRAFTS) {
+        if(Configuration.DEBUG_INJECT_TEST_AIRCRAFTS || (mAircraftsEnabled && !mAircraftsSourceURL.equals(getString(R.string.default_aircrafts_url)))) {
+          // Load aircrafts database
+          mAircraftsDatabase = new AircraftsDatabase(AlertsActivity.this);
+          if(mAircraftsDatabase.getInterestingAircrafts().size() != 0) {
+            mAircraftsActive = 1;
+          }
+        }
+      }
+
+      if(mReportsActive != 0 || mAircraftsActive != 0) {
+        mLocationActive = true;
+
+        // Regularly check network connectivity
+        mNetworkCheckTask = () -> {
+          isNetworkConnected(() -> {
+            mHandler.postDelayed(mNetworkCheckTask, MESSAGE_TOKEN, Configuration.NETWORK_CONNECT_CHECK_TIMER);
+          }, 0);
+        };
+        mHandler.postDelayed(mNetworkCheckTask, MESSAGE_TOKEN, 1);
+
+        mOnGetInitialLocationTask = () -> {
+          if(mReportsActive != 0) {
+            // Regularly fetch crow-sourced reports
+            mCheckForReportsTask = () -> {
+              try {
+                checkForReports(0);
               }
+              finally {
+                mHandler.postDelayed(mCheckForReportsTask, MESSAGE_TOKEN, Configuration.REPORTS_CHECK_TIMER);
+              }
+            };
+            mHandler.postDelayed(mCheckForReportsTask, MESSAGE_TOKEN, 1);
+          }
+
+          if(mAircraftsActive != 0) {
+            // Regularly fetch aircrafts
+            mCheckForAircraftsTask = () -> {
+              try {
+                checkForAircrafts(0);
+              }
+              finally {
+                if(Configuration.DEBUG_INJECT_TEST_AIRCRAFTS || (mAircraftsUser.length() != 0 && mAircraftsPassword.length() != 0)) {
+                  mHandler.postDelayed(mCheckForAircraftsTask, MESSAGE_TOKEN, Configuration.AIRCRAFTS_AUTHENTICATED_CHECK_TIMER);
+                }
+                else {
+                  mHandler.postDelayed(mCheckForAircraftsTask, MESSAGE_TOKEN, Configuration.AIRCRAFTS_ANONYMOUS_CHECK_TIMER);
+                }
+              }
+            };
+            mHandler.postDelayed(mCheckForAircraftsTask, MESSAGE_TOKEN, 1);
+          }
+        };
+
+        // Regularly get the current location
+        mLocationCallback = new LocationCallback() {
+          @Override
+          public void onLocationResult(@NonNull LocationResult locationResult) {
+            Log.i(TAG, String.format("locationCallback.onLocationResult %s", locationResult));
+            if(locationResult == null) {
+              AlertsActivity.this.onLocationChanged(null);
             }
-
-            // Check if aircraft recognition is enabled
-            if(Configuration.ENABLE_AIRCRAFTS) {
-              mAircraftsEnabled = mSharedPreferences.getBoolean(getString(R.string.key_aircrafts_enabled), false);
-              mAircraftsSourceURL = mSharedPreferences.getString(getString(R.string.key_aircrafts_url), getString(R.string.default_aircrafts_url));
-              if(Configuration.DEBUG_INJECT_TEST_AIRCRAFTS || (mAircraftsEnabled && !mAircraftsSourceURL.equals(getString(R.string.default_aircrafts_url)))) {
-                // Load aircrafts database
-                mAircraftsDatabase = new AircraftsDatabase(AlertsActivity.this);
-                if(mAircraftsDatabase.getInterestingAircrafts().size() != 0) {
-                  mAircraftsActive = 1;
-                }
-              }
-            }
-
-            if(mReportsActive != 0 || mAircraftsActive != 0) {
-              mLocationActive = true;
-
-              // Regularly get the current location
-              LocationRequest locationRequest =
-                new LocationRequest.Builder(Priority.PRIORITY_BALANCED_POWER_ACCURACY, Configuration.CURRENT_LOCATION_TIMER).build();
-
-              Runnable getCurrentLocationTask = () -> {
-                Log.i(TAG, "locationclient.getCurrentLocation()");
-                Task<Location> locationTask = mLocationClient.getCurrentLocation(Priority.PRIORITY_BALANCED_POWER_ACCURACY, null);
-                locationTask.addOnSuccessListener((Location location) -> {
-                  Log.i(TAG, "locationclient.getCurrentLocation.onSuccess");
-                  onLocationChanged(location);
-                });
-                locationTask.addOnFailureListener((@NonNull Exception e) -> {
-                  Log.i(TAG, "locationclient.getCurrentLocation.onFailure");
-                  onLocationChanged(null);
-                });
-              };
-
-              mLocationCallback = new LocationCallback() {
-                @Override
-                public void onLocationResult(@NonNull LocationResult locationResult) {
-                  Log.i(TAG, "locationCallback.onLocationResult");
-                  if(locationResult == null) {
-                    AlertsActivity.this.onLocationChanged(null);
-                  }
-                  else {
-                    AlertsActivity.this.onLocationChanged(locationResult.getLastLocation());
-                  }
-                }
-
-                @Override
-                public void onLocationAvailability(@NonNull LocationAvailability locationAvailability) {
-                  Log.i(TAG, "locationCallback.onLocationAvailability");
-                  if(!locationAvailability.isLocationAvailable()) {
-                    AlertsActivity.this.onLocationChanged(null);
-                  }
-                  else {
-                    mHandler.postDelayed(getCurrentLocationTask, MESSAGE_TOKEN, 1000);
-                  }
-                }
-              };
-              Log.i(TAG, "locationclient.requestLocationUpdates()");
-              mLocationClient.requestLocationUpdates(locationRequest, mLocationCallback, Looper.getMainLooper());
-
-              // Request initial location
-              mHandler.postDelayed(getCurrentLocationTask, MESSAGE_TOKEN, 1);
-
-              if(mReportsActive != 0) {
-                // Regularly fetch crow-sourced reports
-                mCheckForReportsTask = new Runnable() {
-                  @Override
-                  public void run() {
-                    try {
-                      checkForReports();
-                    }
-                    finally {
-                      mHandler.postDelayed(this, MESSAGE_TOKEN, Configuration.REPORTS_CHECK_TIMER);
-                    }
-                  }
-                };
-                // Should have received an initial location at this point
-                mHandler.postDelayed(mCheckForReportsTask, MESSAGE_TOKEN, Configuration.REPORTS_INITIAL_CHECK_TIMER);
-              }
-
-              if(mAircraftsActive != 0) {
-                // Regularly fetch aircrafts
-                mAircraftsUser = mSharedPreferences.getString(getString(R.string.key_aircrafts_user), getString(R.string.default_aircrafts_user));
-                if(mAircraftsUser.equals(getString(R.string.default_aircrafts_user))) {
-                  mAircraftsUser = "";
-                }
-                mAircraftsPassword =
-                  mSharedPreferences.getString(getString(R.string.key_aircrafts_password), getString(R.string.default_aircrafts_password));
-                if(mAircraftsPassword.equals(getString(R.string.default_aircrafts_password))) {
-                  mAircraftsPassword = "";
-                }
-
-                mCheckForAircraftsTask = new Runnable() {
-                  @Override
-                  public void run() {
-                    try {
-                      checkForAircrafts();
-                    }
-                    finally {
-                      if(Configuration.DEBUG_INJECT_TEST_AIRCRAFTS || (mAircraftsUser.length() != 0 && mAircraftsPassword.length() != 0)) {
-                        mHandler.postDelayed(this, MESSAGE_TOKEN, Configuration.AIRCRAFTS_AUTHENTICATED_CHECK_TIMER);
-                      }
-                      else {
-                        mHandler.postDelayed(this, MESSAGE_TOKEN, Configuration.AIRCRAFTS_ANONYMOUS_CHECK_TIMER);
-                      }
-                    }
-                  }
-                };
-                // Should have received an initial location at this point
-                mHandler.postDelayed(mCheckForAircraftsTask, MESSAGE_TOKEN, Configuration.AIRCRAFTS_INITIAL_CHECK_TIMER);
+            else {
+              AlertsActivity.this.onLocationChanged(locationResult.getLastLocation());
+              if(mOnGetInitialLocationTask != null) {
+                mHandler.postDelayed(mOnGetInitialLocationTask, MESSAGE_TOKEN, 1);
+                mOnGetInitialLocationTask = null;
               }
             }
           }
-        });
+
+          @Override
+          public void onLocationAvailability(@NonNull LocationAvailability locationAvailability) {
+            Log.i(TAG, String.format("locationCallback.onLocationAvailability %b", locationAvailability.isLocationAvailable()));
+            if(!locationAvailability.isLocationAvailable()) {
+              // Delay the location unavailable announcement a bit as it may
+              // become available again soon
+              if(mLocationNotAvailableTask != null) {
+                mHandler.removeCallbacks(mLocationNotAvailableTask);
+                mLocationNotAvailableTask = null;
+              }
+              mLocationNotAvailableTask = () -> {
+                AlertsActivity.this.onLocationChanged(null);
+              };
+              mHandler.postDelayed(mLocationNotAvailableTask, MESSAGE_TOKEN, Configuration.LOCATION_AVAILABILTY_ANNOUNCEMENT_TIMER);
+            }
+            else {
+              // Cancel any pending location unavailable announcement
+              if(mLocationNotAvailableTask != null) {
+                mHandler.removeCallbacks(mLocationNotAvailableTask);
+                mLocationNotAvailableTask = null;
+              }
+            }
+          }
+        };
+
+        Log.i(TAG, "locationclient.requestLocationUpdates()");
+        mLocationRequest = new LocationRequest.Builder(Priority.PRIORITY_BALANCED_POWER_ACCURACY, Configuration.CURRENT_LOCATION_TIMER).build();
+        mLocationClient.requestLocationUpdates(mLocationRequest, mLocationCallback, Looper.getMainLooper());
       }
     });
   }
 
   private void bindSpeechService(Runnable onDone) {
+    Log.i(TAG, "bindSpeechService");
     // Bind to the speech service
     mSpeechServiceConnection = new ServiceConnection() {
       @Override
       public void onServiceConnected(ComponentName name, IBinder s) {
         Log.i(TAG, "mSpeechServiceConnection.onServiceConnected");
         mSpeechService = ((SpeechService.ThisBinder)s).getService();
-        mSpeechService.isReady(onDone);
-
-        mAlertsAdapter = new AlertsAdapter(AlertsActivity.this);
-        mAlertsRecyclerView.setAdapter(mAlertsAdapter);
+        if(!mBoundSpeechService) {
+          mBoundSpeechService = true;
+          mAlertsAdapter = new AlertsAdapter(AlertsActivity.this, mSpeechService, mReportsSourceName);
+          mAlertsRecyclerView.setAdapter(mAlertsAdapter);
+          mHandler.postDelayed(onDone, MESSAGE_TOKEN, 1);
+        }
       }
 
       @Override
@@ -334,7 +343,6 @@ public class AlertsActivity extends DS1ServiceActivity {
         mSpeechService.announceEvent("Radar detector is on", () -> {
         });
       }
-
     }
     super.onDS1DeviceConnected();
   }
@@ -544,67 +552,103 @@ public class AlertsActivity extends DS1ServiceActivity {
     }, MESSAGE_TOKEN, 1);
   }
 
-  private void isNetworkConnected(Runnable onDone) {
+  private void isNetworkConnected(Runnable onDone, int retryCount) {
     Log.i(TAG, "isNetworkConnected");
-    Network network = mConnectivityManager.getActiveNetwork();
-    boolean networkConnected;
-    if(network != null) {
-      Log.i(TAG, "isNetworkConnected true");
-      networkConnected = true;
-      mNetworkConnectedImage.setColorFilter(Color.LTGRAY);
-    }
-    else {
-      Log.i(TAG, "isNetworkConnected false");
-      networkConnected = false;
-      mNetworkConnectedImage.setColorFilter(Color.DKGRAY);
-    }
+    Runnable networkCheckTask = () -> {
+      boolean connected;
+      try {
+        // Doing this is actually more reliable than checking for an active
+        // network on the Android connectivity manager
+        URL url = new URL("https://www.google.com");
+        Log.i(TAG, String.format("openConnection() %s", url));
+        HttpURLConnection connection = (HttpURLConnection)url.openConnection();
+        connection.setRequestMethod("HEAD");
+        connection.setRequestProperty("Connection", "close");
+        connection.setConnectTimeout(Configuration.NETWORK_CONNECT_TIMEOUT);
+        connection.connect();
+        Log.i(TAG, String.format("connection responseCode %d", connection.getResponseCode()));
+        connected = connection.getResponseCode() == 200;
+      }
+      catch(Exception e) {
+        Log.e(TAG, String.format("Exception %s", e));
+        connected = false;
+      }
+      final boolean networkConnected = connected;
+      Log.i(TAG, String.format("isNetworkConnected %b", networkConnected));
 
-    // Announce network connectivity changes
-    if(!networkConnected && mNetworkConnected) {
-      mNetworkConnected = networkConnected;
-      mSpeechService.announceEvent("Network is offline", () -> mHandler.postDelayed(onDone, MESSAGE_TOKEN, 1));
-    }
-    else if(networkConnected && !mNetworkConnected) {
-      mNetworkConnected = networkConnected;
-      mSpeechService.announceEvent("Network is back online", () -> mHandler.postDelayed(onDone, MESSAGE_TOKEN, 1));
-    }
-    else {
-      mHandler.postDelayed(onDone, MESSAGE_TOKEN, 1);
-    }
-  }
+      if(!networkConnected && retryCount < Configuration.NETWORK_CONNECT_RETRY_COUNT) {
+        // Retry a few times to work around short lived connectivity issues
+        Log.i(TAG, "post retry isNetworkConnected()");
+        mHandler.postDelayed(() -> {
+          isNetworkConnected(onDone, retryCount + 1);
+        }, MESSAGE_TOKEN, Configuration.NETWORK_CONNECT_RETRY_TIMER);
+        return;
+      }
 
-  private void checkForReports() {
-    Log.i(TAG, "checkForReports");
-
-    // Check network connectivity then fetch crowd-sourced reports in a
-    // radius around the current location
-    isNetworkConnected(() -> {
-      if(mNetworkConnected) {
-        if(mLocation != null) {
-          ReportsFetchTask reportsFetchTask = new ReportsFetchTask(mReportsSourceURL, mLocation) {
-            @Override
-            protected void onDone(List<Alert> reports) {
-              if(reports == null) {
-                Log.i(TAG, "reportsFetchTask.onDone null reports");
-              }
-              else {
-                Log.i(TAG, String.format("reportsFetchTask.onDone %d reports", reports.size()));
-              }
-              onReportsData(reports);
-            }
-          };
-
-          Log.i(TAG, "reportsFetchTask.execute()");
-          mReportsFetchTaskExecutor.execute(reportsFetchTask);
+      mHandler.postDelayed(() -> {
+        if(networkConnected) {
+          mNetworkConnectedImage.setColorFilter(Color.LTGRAY);
         }
         else {
-          onReportsData(null);
+          mNetworkConnectedImage.setColorFilter(Color.DKGRAY);
         }
+        // Announce network connectivity changes
+        if(!networkConnected && mNetworkConnected) {
+          mNetworkConnected = networkConnected;
+          mSpeechService.announceEvent("Network is offline", () -> mHandler.postDelayed(onDone, MESSAGE_TOKEN, 1));
+        }
+        else if(networkConnected && !mNetworkConnected) {
+          mNetworkConnected = networkConnected;
+          mSpeechService.announceEvent("Network is back online", () -> mHandler.postDelayed(onDone, MESSAGE_TOKEN, 1));
+        }
+        else {
+          onDone.run();
+        }
+      }, MESSAGE_TOKEN, 1);
+    };
+    mNetworkCheckTaskExecutor.execute(networkCheckTask);
+  }
+
+  private void checkForReports(int retryCount) {
+    Log.i(TAG, String.format("checkForReports retryCount %d", retryCount));
+
+    // Fetch crowd-sourced reports in a radius around the current location
+    if(mNetworkConnected) {
+      if(mLocation != null) {
+        ReportsFetchTask reportsFetchTask = new ReportsFetchTask(mReportsSourceURL, mLocation) {
+          @Override
+          protected void onDone(List<Alert> reports) {
+            if(reports == null) {
+              Log.i(TAG, "reportsFetchTask.onDone null reports");
+              if(retryCount < Configuration.REPORTS_CHECK_RETRY_COUNT) {
+                // Retry a few times before giving up, to work around short
+                // lived connectivity issues
+                Log.i(TAG, "post retry checkForReports()");
+                mHandler.postDelayed(() -> {
+                  checkForReports(retryCount + 1);
+                }, MESSAGE_TOKEN, Configuration.REPORTS_CHECK_RETRY_TIMER);
+              }
+              else {
+                onReportsData(null);
+              }
+            }
+            else {
+              Log.i(TAG, String.format("reportsFetchTask.onDone %d reports", reports.size()));
+              onReportsData(reports);
+            }
+          }
+        };
+
+        Log.i(TAG, "reportsFetchTask.execute()");
+        mReportsFetchTaskExecutor.execute(reportsFetchTask);
       }
       else {
         onReportsData(null);
       }
-    });
+    }
+    else {
+      onReportsData(null);
+    }
   }
 
   protected void onReportsData(List<Alert> reports) {
@@ -612,7 +656,7 @@ public class AlertsActivity extends DS1ServiceActivity {
       mReportsActiveImage.setColorFilter(Color.DKGRAY);
       if(mReportsActive != 0) {
         mReportsActive = 0;
-        mSpeechService.announceEvent("Reports are off", () -> {
+        mSpeechService.announceEvent(String.format("%s alerts are off", mReportsSourceName), () -> {
         });
       }
       return;
@@ -621,12 +665,12 @@ public class AlertsActivity extends DS1ServiceActivity {
       mReportsActiveImage.setColorFilter(Color.LTGRAY);
       if(mReportsActive == 0) {
         mReportsActive = 2;
-        mSpeechService.announceEvent("Reports are back on", () -> {
+        mSpeechService.announceEvent(String.format("%s alerts are back on", mReportsSourceName), () -> {
         });
       }
-      if(mReportsActive == 1) {
+      else if(mReportsActive == 1) {
         mReportsActive = 2;
-        mSpeechService.announceEvent("Reports are on", () -> {
+        mSpeechService.announceEvent(String.format("%s alerts are on", mReportsSourceName), () -> {
         });
       }
     }
@@ -679,39 +723,47 @@ public class AlertsActivity extends DS1ServiceActivity {
     }, MESSAGE_TOKEN, 1);
   }
 
-  private void checkForAircrafts() {
+  private void checkForAircrafts(int retryCount) {
     Log.i(TAG, "checkForAircrafts");
 
-    // Check network connectivity then fetch aircraft state vectors in a
-    // radius around the current location
-    isNetworkConnected(() -> {
-      if(mNetworkConnected) {
-        if(mLocation != null) {
-          AircraftsFetchTask aircraftsFetchTask = new AircraftsFetchTask(mAircraftsSourceURL, mAircraftsUser, mAircraftsPassword, mAircraftsDatabase,
-            mLocation) {
-            @Override
-            protected void onDone(List<Alert> aircrafts) {
-              if(aircrafts == null) {
-                Log.i(TAG, "aircraftsFetchTask.onDone null aircraft state vectors");
+    // Fetch aircraft state vectors in a radius around the current location
+    if(mNetworkConnected) {
+      if(mLocation != null) {
+        AircraftsFetchTask aircraftsFetchTask = new AircraftsFetchTask(mAircraftsSourceURL, mAircraftsUser, mAircraftsPassword, mAircraftsDatabase,
+          mLocation) {
+          @Override
+          protected void onDone(List<Alert> aircrafts) {
+            if(aircrafts == null) {
+              Log.i(TAG, "aircraftsFetchTask.onDone null aircraft state vectors");
+              if(retryCount < Configuration.AIRCRAFTS_CHECK_RETRY_COUNT) {
+                // Retry a few times before giving up, to work around short
+                // lived connectivity issues
+                Log.i(TAG, "post retry checkForAircrafts()");
+                mHandler.postDelayed(() -> {
+                  checkForReports(retryCount + 1);
+                }, MESSAGE_TOKEN, Configuration.AIRCRAFTS_CHECK_RETRY_TIMER);
               }
               else {
-                Log.i(TAG, String.format("aircraftsFetchTask.onDone %d aircraft state vectors", aircrafts.size()));
+                onAircraftsData(null);
               }
+            }
+            else {
+              Log.i(TAG, String.format("aircraftsFetchTask.onDone %d aircraft state vectors", aircrafts.size()));
               onAircraftsData(aircrafts);
             }
-          };
+          }
+        };
 
-          Log.i(TAG, "aircraftsFetchTask.execute()");
-          mAircraftsFetchTaskExecutor.execute(aircraftsFetchTask);
-        }
-        else {
-          onAircraftsData(null);
-        }
+        Log.i(TAG, "aircraftsFetchTask.execute()");
+        mAircraftsFetchTaskExecutor.execute(aircraftsFetchTask);
       }
       else {
         onAircraftsData(null);
       }
-    });
+    }
+    else {
+      onAircraftsData(null);
+    }
   }
 
   protected void onAircraftsData(List<Alert> aircrafts) {
@@ -719,7 +771,7 @@ public class AlertsActivity extends DS1ServiceActivity {
       mAircraftsActiveImage.setColorFilter(Color.DKGRAY);
       if(mAircraftsActive != 0) {
         mAircraftsActive = 0;
-        mSpeechService.announceEvent("Aircraft recognition is off", () -> {
+        mSpeechService.announceEvent("Aircraft alerts are off", () -> {
         });
       }
       return;
@@ -728,12 +780,12 @@ public class AlertsActivity extends DS1ServiceActivity {
       mAircraftsActiveImage.setColorFilter(Color.LTGRAY);
       if(mAircraftsActive == 0) {
         mAircraftsActive = 2;
-        mSpeechService.announceEvent("Aircraft recognition is back on", () -> {
+        mSpeechService.announceEvent("Aircraft alerts are back on", () -> {
         });
       }
       else if(mAircraftsActive == 1) {
         mAircraftsActive = 2;
-        mSpeechService.announceEvent("Aircraft recognition is on", () -> {
+        mSpeechService.announceEvent("Aircraft alerts are on", () -> {
         });
       }
     }

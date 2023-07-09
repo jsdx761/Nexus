@@ -25,7 +25,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -104,6 +103,8 @@ public class AircraftsFetchTask implements Runnable {
         Log.i(TAG, String.format("URL.openConnection %s", url.toExternalForm()));
         connection = (HttpURLConnection)url.openConnection();
         connection.setRequestMethod("GET");
+        connection.setRequestProperty("Connection", "close");
+        connection.setConnectTimeout(Configuration.AIRCRAFTS_CONNECT_TIMEOUT);
 
         if(mUser.length() != 0 && mPassword.length() != 0) {
           String userPass = mUser + ":" + mPassword;
@@ -136,7 +137,7 @@ public class AircraftsFetchTask implements Runnable {
         String jsonString = buffer.toString();
         json = new JSONObject(jsonString);
       }
-      catch(IOException | JSONException e) {
+      catch(Exception e) {
         Log.e(TAG, "Exception reading JSON from URL", e);
         onDone(null);
         return;
@@ -149,7 +150,7 @@ public class AircraftsFetchTask implements Runnable {
           try {
             reader.close();
           }
-          catch(IOException e) {
+          catch(Exception e) {
             Log.e(TAG, "IOException closing reader", e);
           }
         }
@@ -176,14 +177,14 @@ public class AircraftsFetchTask implements Runnable {
               }
             }
           }
-          catch(JSONException e) {
-            Log.e(TAG, "JSONException processing aircraft state vector", e);
+          catch(Exception e) {
+            Log.e(TAG, "Exception processing aircraft state vector", e);
           }
         }
       }
     }
-    catch(JSONException e) {
-      Log.e(TAG, "JSONException processing aircraft state vectors", e);
+    catch(Exception e) {
+      Log.e(TAG, "Exception processing aircraft state vectors", e);
       onDone(null);
       return;
     }

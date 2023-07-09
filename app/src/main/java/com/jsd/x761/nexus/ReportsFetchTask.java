@@ -21,11 +21,9 @@ import android.location.Location;
 import android.util.Log;
 
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -60,8 +58,8 @@ public class ReportsFetchTask implements Runnable {
         Log.i(TAG, "using test reports");
         json = new JSONObject(Configuration.DEBUG_TEST_REPORTS);
       }
-      catch(JSONException e) {
-        Log.e(TAG, "JSONException reading reports", e);
+      catch(Exception e) {
+        Log.e(TAG, "Exception reading reports", e);
         onDone(null);
         return;
       }
@@ -96,6 +94,8 @@ public class ReportsFetchTask implements Runnable {
         Log.i(TAG, String.format("URL.openConnection %s", url.toExternalForm()));
         connection = (HttpURLConnection)url.openConnection();
         connection.setRequestMethod("GET");
+        connection.setRequestProperty("Connection", "close");
+        connection.setConnectTimeout(Configuration.REPORTS_CONNECT_TIMEOUT);
         connection.connect();
 
         InputStream inputStream = connection.getInputStream();
@@ -119,7 +119,7 @@ public class ReportsFetchTask implements Runnable {
         String jsonString = buffer.toString();
         json = new JSONObject(jsonString);
       }
-      catch(IOException | JSONException e) {
+      catch(Exception e) {
         Log.e(TAG, "Exception reading JSON from URL", e);
         onDone(null);
         return;
@@ -132,7 +132,7 @@ public class ReportsFetchTask implements Runnable {
           try {
             reader.close();
           }
-          catch(IOException e) {
+          catch(Exception e) {
             Log.e(TAG, "IOException closing reader", e);
           }
         }
@@ -154,14 +154,14 @@ public class ReportsFetchTask implements Runnable {
               reports.add(report);
             }
           }
-          catch(JSONException e) {
-            Log.e(TAG, "JSONException processing report", e);
+          catch(Exception e) {
+            Log.e(TAG, "Exception processing report", e);
           }
         }
       }
     }
-    catch(JSONException e) {
-      Log.e(TAG, "JSONException processing reports", e);
+    catch(Exception e) {
+      Log.e(TAG, "Exception processing reports", e);
       onDone(null);
       return;
     }
