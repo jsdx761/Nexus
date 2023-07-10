@@ -26,6 +26,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:screenOrientation="portrait"
         android:supportsRtl="true"
+        android:allowAudioPlaybackCapture="true"
         android:theme="@style/Theme.Nexus">
         <service
             android:name="com.jsd.x761.nexus.SpeechService"

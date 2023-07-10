@@ -91,7 +91,8 @@ public class SpeechService extends Service {
           public void onStart(String s) {
             Log.i(TAG, "UtteranceProgressListener.onStart");
             for(int i = 0; i < Configuration.AUDIO_ADJUST_RAISE_COUNT; i++) {
-              mAudioManager.adjustStreamVolume(AudioManager.STREAM_VOICE_CALL, AudioManager.ADJUST_RAISE, 0);
+              // Another option is AudioManager.STREAM_VOICE_CALL
+              mAudioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_RAISE, 0);
             }
           }
 
@@ -99,7 +100,8 @@ public class SpeechService extends Service {
           public void onDone(String s) {
             Log.i(TAG, "UtteranceProgressListener.onDone");
             for(int i = 0; i < Configuration.AUDIO_ADJUST_RAISE_COUNT; i++) {
-              mAudioManager.adjustStreamVolume(AudioManager.STREAM_VOICE_CALL, AudioManager.ADJUST_LOWER, 0);
+              // Another option is AudioManager.STREAM_VOICE_CALL
+              mAudioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_LOWER, 0);
             }
             Log.i(TAG, "onPlaySpeech.onDone.run()");
             Runnable callback = mTextToSpeechCallback.get(s);
@@ -197,8 +199,9 @@ public class SpeechService extends Service {
     // Request audio focus with ducking for speech over a voice communication stream
     mDuckedAudioMedia++;
     if(mDuckedAudioMedia == 1) {
+      // Another options is AudioAttributes.USAGE_VOICE_COMMUNICATION
       AudioAttributes playbackAttributes =
-        new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION).setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build();
+        new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA).setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build();
       mAudioFocusRequest = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK).setAudioAttributes(playbackAttributes)
         .setAcceptsDelayedFocusGain(false)
         .build();
@@ -243,7 +246,8 @@ public class SpeechService extends Service {
     String uuid = UUID.randomUUID().toString();
     Log.i(TAG, String.format("mTextToSpeech.playEarcon() uuid %s earcon %s", uuid, earcon));
     Bundle params = new Bundle();
-    params.putInt(TextToSpeech.Engine.KEY_PARAM_STREAM, AudioManager.STREAM_VOICE_CALL);
+    // Another option is AudioManager.STREAM_VOICE_CALL
+    params.putInt(TextToSpeech.Engine.KEY_PARAM_STREAM, AudioManager.STREAM_MUSIC);
     mTextToSpeech.playEarcon(earcon, TextToSpeech.QUEUE_ADD, params, uuid);
   }
 
@@ -253,7 +257,8 @@ public class SpeechService extends Service {
     // adjust the individual volume of each stream separately
     Log.i(TAG, String.format("mTextToSpeech.speak() uuid %s speech %s", uuid, speech));
     Bundle params = new Bundle();
-    params.putInt(TextToSpeech.Engine.KEY_PARAM_STREAM, AudioManager.STREAM_VOICE_CALL);
+    // Another option is AudioManager.STREAM_VOICE_CALL
+    params.putInt(TextToSpeech.Engine.KEY_PARAM_STREAM, AudioManager.STREAM_MUSIC);
     mTextToSpeech.speak(speech, TextToSpeech.QUEUE_ADD, params, uuid);
   }
 
@@ -281,7 +286,8 @@ public class SpeechService extends Service {
       // can adjust the individual volume of each stream separately
       Log.i(TAG, String.format("mTextToSpeech.speak() uuid %s speech %s", uuid, event));
       Bundle params = new Bundle();
-      params.putInt(TextToSpeech.Engine.KEY_PARAM_STREAM, AudioManager.STREAM_VOICE_CALL);
+      // Another option is AudioManager.STREAM_VOICE_CALL
+      params.putInt(TextToSpeech.Engine.KEY_PARAM_STREAM, AudioManager.STREAM_MUSIC);
       mTextToSpeech.speak(event, TextToSpeech.QUEUE_ADD, params, uuid);
     });
   }
