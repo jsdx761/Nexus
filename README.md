@@ -239,24 +239,77 @@ The **Settings** menu provides the following options:
     instead of minutes.
 
 Voice announcements and sound notifications will play on the phone's
-**Voice call** audio stream. You will need to select your phone's Bluetooth as
+**Music** audio stream. You will need to select your phone's Bluetooth as
 audio source in the vehicle, then if you stream music for example the app
 will duck the music as needed so you can clearly hear the announcements.
-
-Most Android phones let you set separate volumes for the music **Media** and
-**Voice call** streams, so you should be able to control how loud you want the
-voice announcements to be over your music.
 
 # Sample screens and audio
 
 TODO add screenshots and maybe recordings of the audio experience here
 
-# Limitations
+# Implementation choices and limitations
 
-TODO describe some of the limitations of the alert selection and aircraft
-detection algorithms, and how the app just relies on the DS1 radar detector
-for filtering etc and doesn't do all the additional smarts that you get with
-the other apps out there.
+Nexus completely relies on the DS1 radar detector for alert filtering,
+lockouts, muting etc without any smarts on top. Other apps like JBV1 and
+Highway Radar have much more sophisticated logic but for me the DS1 was enough
+and just more predictable. So the app reports exactly what it gets from the
+DS1 unit, no less, no more. The Radenso folks know what they're doing with
+their radar detector, and I wasn't going to pretend to do better.
+
+The handling of crowd-sourced and aircraft alerts is a bit simplistic but I
+was looking for a simple algorithm that I could just trust as I didn't feel
+like trusting the fancy scoring logic in some of the other apps which for
+example would favor alerts in front vs side or back or take into account the
+number of thumbs up on those crowd-sourced alerts. Nexus simply reports the
+closest crowd-sourced alerts within a 2-mile radius, and aircraft alerts
+within a 5-mile radius.
+
+I didn't feel like restricting the reporting to crowd-sourced alerts on the
+current road or navigation route as I saw instances of alerts incorrectly
+reported on side roads and I also wanted to get alerts on threats potentially
+approaching from side roads as well, so a more brute-force just reporting
+alerts within a certain radius felt a bit more safe after all.
+
+Aircraft alerts don't implement any fancy flight pattern recognition like
+some of the other apps do as that looked to me a bit far-fetched and the
+operation/ownership info on aircrafts in OpenSky and FAA aircraft databases
+already gave a good enough indication of which aircrafts could be potential
+surveillance aircrafts. Again here I favored reporting more aircrafts
+than less just to be safe, and there's not that many that it gives too many
+false positives anyway.
+
+Alert announcements simply indicate the distance and the bearing in 12-oclock 
+format, for example: "Speed trap at 11 o-clock 1.5 mile away on I-280", or
+"California Highway Patrol Eurocopter Helicopter at 7 o-clock 2 miles away".
+
+Reminders are announced each time crowd-sourced alerts get 1/4 mile closer or
+aircraft alerts get 1 mile closer, or when the bearing to the alert changes by
+at least 3 hours.
+
+A short sound notification reminder is played regularly while any crowd-sourced
+or aircrafts alerts are active and in range, so you know you can't relax yet.
+
+Once all alerts are gone or out of range the app plays an "Alerts are all
+clear now" announcement, so you know you can finally relax.
+
+Radar detector on/off, internet connectivity on/off, location on/off, and
+availability of crowd-sourced and aircraft alerts are announced as well, but
+intentionally after a short delay to minimize unnecessary distractions as many
+of those conditions typically resolve by themselves after a few seconds.
+
+I initially wanted to use to Bluetooth Synchronous Connection Oriented / Car
+Audio Interrupt to have the app interrupt all audio sources on the car to play
+alert announcements, but that introduced a delay of about 1-second for each
+announcement, so I eventually favored using the Android Music stream instead
+to get audio alerts right away.  That means that you'll need to select your
+phone's Bluetooth as Audio input on the car. That works well for me as I
+usually stream music from the phone (or sometimes just keep the phone silent
+but still selected as Audio input) but if you prefer to use Bluetooth SCO / CAI
+to have the ability to interrupt other audio sources, it should be fairly easy
+to implement with a few minor changes to the app.
+
+Again, the complete source of the app is open-sourced here on Github so feel
+free to to tweak whatever you need to make it work for you! :-)
 
 # Disclaimers
 
