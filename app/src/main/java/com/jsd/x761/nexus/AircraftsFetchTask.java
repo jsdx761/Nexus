@@ -59,7 +59,7 @@ public class AircraftsFetchTask implements Runnable {
     Log.i(TAG, String.format("run lat %f lng %f", (float)mLocation.getLatitude(), (float)mLocation.getLongitude()));
 
     JSONObject json = null;
-    if(Configuration.DEBUG_INJECT_TEST_AIRCRAFTS) {
+    if(Configuration.DEBUG_INJECT_TEST_AIRCRAFTS != 0) {
       // Support using test aircraft state vectors to help debugging without
       // having to connect to an actual server everytime
       try {
@@ -161,6 +161,7 @@ public class AircraftsFetchTask implements Runnable {
     try {
       JSONArray jsonAircrafts = json.optJSONArray("states");
       if(jsonAircrafts != null) {
+        int n = 0;
         for(int i = 0; i < jsonAircrafts.length(); i++) {
           JSONArray jsonAircraft = jsonAircrafts.getJSONArray(i);
           try {
@@ -172,8 +173,16 @@ public class AircraftsFetchTask implements Runnable {
             String[] aircraftInfo = mAircraftsDatabase.getInterestingAircrafts().get(transponder);
             if(aircraftInfo != null) {
               Alert aircraft = Alert.fromAircraft(mLocation, jsonAircraft, aircraftInfo);
-              if((!aircraft.onGround && aircraft.distance <= Configuration.AIRCRAFTS_MAX_DISTANCE) || Configuration.DEBUG_INJECT_TEST_AIRCRAFTS) {
-                aircrafts.add(aircraft);
+              if(Configuration.DEBUG_INJECT_TEST_AIRCRAFTS != 0) {
+                if(n < Configuration.DEBUG_INJECT_TEST_AIRCRAFTS) {
+                  aircrafts.add(aircraft);
+                  n++;
+                }
+              }
+              else {
+                if(!aircraft.onGround && aircraft.distance <= Configuration.AIRCRAFTS_MAX_DISTANCE) {
+                  aircrafts.add(aircraft);
+                }
               }
             }
           }

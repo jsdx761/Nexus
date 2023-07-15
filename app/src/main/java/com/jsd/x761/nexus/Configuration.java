@@ -59,21 +59,21 @@ public class Configuration {
   public static final int AIRCRAFTS_CONNECT_TIMEOUT = 5000;
   public static final boolean DEBUG_USE_NULL_DS1_SERVICE = DEBUG;
   public static final long DEBUG_NULL_DS1_SERVICE_SCAN_TIMER = 2000;
-  public static final boolean DEBUG_INJECT_TEST_ALERTS = DEBUG;
-  public static final boolean DEBUG_INJECT_TEST_BACKGROUND_ALERTS = false;
-  public static final long DEBUG_TEST_BACKGROUND_ALERTS_TIMER = 20000;
+  public static final int DEBUG_INJECT_TEST_ALERTS = DEBUG ? 1 : 0;
+  public static final long DEBUG_TEST_ALERTS_TIMER = DEBUG ? 40000 : 0;
 
-  public static final String[] DEBUG_TEST_ALERTS = DEBUG_INJECT_TEST_ALERTS ? new String[]{
+  public static final String[] DEBUG_TEST_ALERTS = DEBUG_INJECT_TEST_ALERTS != 0 ? new String[]{
     "1,123,KA,10,456,34.7,F,1",
-    //"1,123,K,10,456,24.1,F,1",
-    //"1,123,Laser,10,456,29.8,F,1",
-    //"1,123,K,10,456,29.8,F,1",
-    //"1,123,X,10,456,29.8,F,1"
+    "1,123,K,10,456,24.1,F,1",
+    "1,123,Laser,10,456,29.8,F,1",
+    "1,123,K,10,456,29.8,F,1",
+    "1,123,X,10,456,29.8,F,1"
   } : new String[]{};
 
   public static final boolean DEBUG_USE_ZERO_BEARING = DEBUG;
   public static final boolean DEBUG_ANNOUNCE_VEHICLE_BEARING = false;
-  public static final boolean DEBUG_INJECT_TEST_REPORTS = DEBUG;
+  public static final int DEBUG_INJECT_TEST_REPORTS = DEBUG ? 1 : 0;
+  public static final long DEBUG_TEST_REPORTS_TIMER = DEBUG ? 40000 : 0;
   public static final float REPORTS_MAX_DISTANCE = DEBUG ? 50.0f : 2.0f;
   public static final long REPORTS_REMINDER_TIMER = 60000;
   public static final float REPORTS_REMINDER_DISTANCE = 0.25f;
@@ -81,7 +81,7 @@ public class Configuration {
   public static final int REPORTS_MAX_SPEECH_ANNOUNCES = 3;
   public static final int REPORTS_MAX_EARCON_ANNOUNCES = 1;
 
-  public static final String DEBUG_TEST_REPORTS = DEBUG_INJECT_TEST_REPORTS ? """
+  public static final String DEBUG_TEST_REPORTS = DEBUG_INJECT_TEST_REPORTS != 0 ? """
       {
         "alerts" : [
             {
@@ -168,7 +168,8 @@ public class Configuration {
       }
     """ : "";
 
-  public static final boolean DEBUG_INJECT_TEST_AIRCRAFTS = DEBUG;
+  public static final int DEBUG_INJECT_TEST_AIRCRAFTS = DEBUG ? 1 : 0;
+  public static final long DEBUG_TEST_AIRCRAFTS_TIMER = DEBUG ? 40000 : 0;
   public static final float AIRCRAFTS_MAX_DISTANCE = DEBUG ? 50.0f : 5.0f;
   public static final long AIRCRAFTS_REMINDER_TIMER = 60000;
   public static final float AIRCRAFTS_REMINDER_DISTANCE = 1.0f;
@@ -178,10 +179,10 @@ public class Configuration {
 
   // The following test transponder icao24 addresses correspond to interesting
   // aircrafts in the aircrafts database
-  // a3566a
-  // a54f11
   // a6165b
-  public static final String DEBUG_TEST_AIRCRAFTS = DEBUG_INJECT_TEST_AIRCRAFTS ? """
+  // a54f11
+  // a3566a
+  public static final String DEBUG_TEST_AIRCRAFTS = DEBUG_INJECT_TEST_AIRCRAFTS != 0 ? """
       {
         "states" : [
             [
@@ -204,21 +205,21 @@ public class Configuration {
               0
             ],
             [
-              "a3566a",
-              "N505FC  ",
+              "a6165b",
+              "",
               "United States",
               0,
               0,
-              -121.9344,
-              37.3616,
+              -121.9982,
+              37.498,
+              1676.4,
+              false,
+              123.89,
+              274.76,
+              -5.2,
               null,
-              true,
-              0,
-              230.62,
-              null,
-              null,
-              null,
-              "6042",
+              1653.54,
+              "7253",
               false,
               0
             ],
@@ -280,21 +281,21 @@ public class Configuration {
               0
             ],
             [
-              "a6165b",
-              "",
+              "a3566a",
+              "N505FC  ",
               "United States",
               0,
               0,
-              -121.9982,
-              37.498,
-              1676.4,
-              false,
-              123.89,
-              274.76,
-              -5.2,
+              -121.9344,
+              37.3616,
               null,
-              1653.54,
-              "7253",
+              true,
+              0,
+              230.62,
+              null,
+              null,
+              null,
+              "6042",
               false,
               0
             ],

@@ -162,7 +162,7 @@ public class AlertsActivity extends DS1ServiceActivity {
           Log.i(TAG, "bindDS1Service()");
           bindDS1Service(() -> {
             Log.i(TAG, "bindDS1Service.onDone");
-            if(Configuration.DEBUG_INJECT_TEST_BACKGROUND_ALERTS) {
+            if(Configuration.DEBUG_TEST_ALERTS_TIMER != 0) {
               // Inject test background DS1 alerts every few seconds to help
               // test the app without having to use an actual DS1 device
               // everytime
@@ -172,7 +172,7 @@ public class AlertsActivity extends DS1ServiceActivity {
                   onDS1DeviceData();
                 }
                 finally {
-                  mHandler.postDelayed(mDebugBackgroundAlertsTask, MESSAGE_TOKEN, Configuration.DEBUG_TEST_BACKGROUND_ALERTS_TIMER);
+                  mHandler.postDelayed(mDebugBackgroundAlertsTask, MESSAGE_TOKEN, Configuration.DEBUG_TEST_ALERTS_TIMER);
                 }
               };
               mHandler.postDelayed(mDebugBackgroundAlertsTask, MESSAGE_TOKEN, 1);
@@ -183,14 +183,14 @@ public class AlertsActivity extends DS1ServiceActivity {
 
       // Check if crowd-sourced reports are enabled
       if(Configuration.ENABLE_REPORTS) {
-        if(Configuration.DEBUG_INJECT_TEST_REPORTS || (mReportsEnabled && !mReportsSourceURL.equals(getString(R.string.default_reports_url)))) {
+        if(Configuration.DEBUG_INJECT_TEST_REPORTS != 0 || (mReportsEnabled && !mReportsSourceURL.equals(getString(R.string.default_reports_url)))) {
           mReportsActive = 1;
         }
       }
 
       // Check if aircraft recognition is enabled
       if(Configuration.ENABLE_AIRCRAFTS) {
-        if(Configuration.DEBUG_INJECT_TEST_AIRCRAFTS || (mAircraftsEnabled && !mAircraftsSourceURL.equals(getString(R.string.default_aircrafts_url)))) {
+        if(Configuration.DEBUG_INJECT_TEST_AIRCRAFTS != 0 || (mAircraftsEnabled && !mAircraftsSourceURL.equals(getString(R.string.default_aircrafts_url)))) {
           // Load aircrafts database
           mAircraftsDatabase = new AircraftsDatabase(AlertsActivity.this);
           if(mAircraftsDatabase.getInterestingAircrafts().size() != 0) {
@@ -231,7 +231,7 @@ public class AlertsActivity extends DS1ServiceActivity {
                 checkForAircrafts(0);
               }
               finally {
-                if(Configuration.DEBUG_INJECT_TEST_AIRCRAFTS || (mAircraftsUser.length() != 0 && mAircraftsPassword.length() != 0)) {
+                if(Configuration.DEBUG_INJECT_TEST_AIRCRAFTS != 0 || (mAircraftsUser.length() != 0 && mAircraftsPassword.length() != 0)) {
                   mHandler.postDelayed(mCheckForAircraftsTask, MESSAGE_TOKEN, Configuration.AIRCRAFTS_AUTHENTICATED_CHECK_TIMER);
                 }
                 else {
@@ -395,13 +395,17 @@ public class AlertsActivity extends DS1ServiceActivity {
         }
       }
     }
-    if(Configuration.DEBUG_INJECT_TEST_ALERTS) {
+    if(Configuration.DEBUG_INJECT_TEST_ALERTS != 0) {
       // Inject test alerts to help test the app without having to
       // use an actual DS1 device everytime
       Log.i(TAG, "injecting test DS1 alerts");
       DS1Service ds1Service = new DS1Service();
+      int n = 0;
       for(String alert : Configuration.DEBUG_TEST_ALERTS) {
-        alerts.add(Alert.fromDS1Alert(ds1Service.new RD_Alert(alert)));
+        if(n < Configuration.DEBUG_INJECT_TEST_ALERTS) {
+          alerts.add(Alert.fromDS1Alert(ds1Service.new RD_Alert(alert)));
+          n++;
+        }
       }
     }
 

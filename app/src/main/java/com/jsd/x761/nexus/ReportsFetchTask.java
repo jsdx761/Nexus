@@ -51,7 +51,7 @@ public class ReportsFetchTask implements Runnable {
     Log.i(TAG, String.format("run lat %f lng %f", (float)mLocation.getLatitude(), (float)mLocation.getLongitude()));
 
     JSONObject json = null;
-    if(Configuration.DEBUG_INJECT_TEST_REPORTS) {
+    if(Configuration.DEBUG_INJECT_TEST_REPORTS != 0) {
       // Support using test reports to help debugging without having to
       // connect to an actual server everytime
       try {
@@ -143,6 +143,7 @@ public class ReportsFetchTask implements Runnable {
     try {
       JSONArray jsonReports = json.optJSONArray("alerts");
       if(jsonReports != null) {
+        int n = 0;
         for(int i = 0; i < jsonReports.length(); i++) {
           JSONObject jsonReport = jsonReports.getJSONObject(i);
           try {
@@ -151,7 +152,15 @@ public class ReportsFetchTask implements Runnable {
             Log.i(TAG, String.format("report type %s", type));
             if("POLICE".equals(type) || "ACCIDENT".equals(type)) {
               Alert report = Alert.fromReport(mLocation, jsonReport);
-              reports.add(report);
+              if(Configuration.DEBUG_INJECT_TEST_REPORTS != 0) {
+                if(n < Configuration.DEBUG_INJECT_TEST_REPORTS) {
+                  reports.add(report);
+                  n++;
+                }
+              }
+              else {
+                reports.add(report);
+              }
             }
           }
           catch(Exception e) {
