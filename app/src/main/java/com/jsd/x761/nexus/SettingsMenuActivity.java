@@ -47,7 +47,7 @@ public class SettingsMenuActivity extends MenuActivity {
     mArrayMenu.add("        Radar Detector");
     mIntentMenu.add(new ActivityConfiguration(DS1ScanActivity.class));
 
-    mArrayMenu.add("          Volume");
+    mArrayMenu.add("          DS1 Volume");
     mIntentMenu.add(new ActivityConfiguration(DS1VolumeActivity.class));
 
     mArrayMenu.add("        Crowd-sourced Alerts");

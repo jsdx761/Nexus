@@ -48,7 +48,7 @@ public class DS1VolumeActivity extends DS1ServiceActivity {
     Log.i(TAG, "onCreate");
     super.onCreate(b);
 
-    setTitle("Volume");
+    setTitle("DS1 Volume");
 
     setContentView(R.layout.ds1_volume_activity);
     mDS1ConnectedImage = findViewById(R.id.ds1ConnectedImage);
