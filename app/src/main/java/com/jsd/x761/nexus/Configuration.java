@@ -22,17 +22,17 @@ package com.jsd.x761.nexus;
  */
 public class Configuration {
 
-  public static final boolean DEBUG = false;
+  public static final boolean DEBUG = true;
   public static final long SPLASH_TIMER = 2000;
   public static final String DS1_SERVICE_SCAN_NAME = "DS1@E1";
   public static final long DS1_SERVICE_CONNECT_WAIT_TIMER = 5000;
   public static final long DS1_SERVICE_SETUP_TIMER = 1000;
   public static final long DS1_SERVICE_RECONNECT_TIMER = 5000;
   public static final long CLEAR_REMINDER_TIMER = 10000;
-  public static final boolean ENABLE_RADAR_ALERTS = true;
-  public static final long ALERTS_CLEAR_TIMER = 10000;
-  public static final int RADAR_ALERTS_MAX_SPEECH_ANNOUNCES = DEBUG ? 1 : 3;
-  public static final int RADAR_ALERTS_MAX_EARCON_ANNOUNCES = DEBUG ? 1 : 3;
+  public static final boolean ENABLE_DS1_ALERTS = true;
+  public static final long DS1_ALERTS_CLEAR_TIMER = 10000;
+  public static final int DS1_ALERTS_MAX_SPEECH_ANNOUNCES = DEBUG ? 1 : 3;
+  public static final int DS1_ALERTS_MAX_EARCON_ANNOUNCES = DEBUG ? 1 : 3;
   public static final int AUDIO_ADJUST_RAISE_COUNT = 0;
   public static final float AUDIO_SPEECH_PITCH = 0.95f;
   public static final float AUDIO_SPEECH_RATE = 1.1f;
@@ -59,10 +59,12 @@ public class Configuration {
   public static final int AIRCRAFTS_CONNECT_TIMEOUT = 5000;
   public static final boolean DEBUG_USE_NULL_DS1_SERVICE = DEBUG;
   public static final long DEBUG_NULL_DS1_SERVICE_SCAN_TIMER = 2000;
-  public static final int DEBUG_INJECT_TEST_ALERTS = DEBUG ? 1 : 0;
-  public static final long DEBUG_TEST_ALERTS_TIMER = DEBUG ? 40000 : 0;
+  public static final int DEBUG_INJECT_TEST_DS1_ALERTS = DEBUG ? 1 : 0;
+  public static final long DEBUG_TEST_DS1_ALERTS_TIMER = DEBUG ? 40000 : 0;
+  public static final long DEBUG_TEST_DS1_ALERTS_REPEAT_TIMER = DEBUG ? 300 : 0;
+  public static final long DEBUG_TEST_DS1_ALERTS_REPEAT_COUNT = DEBUG ? 5 : 0;
 
-  public static final String[] DEBUG_TEST_ALERTS = DEBUG_INJECT_TEST_ALERTS != 0 ? new String[]{
+  public static final String[] DEBUG_TEST_DS1_ALERTS = DEBUG_INJECT_TEST_DS1_ALERTS != 0 ? new String[]{
     "1,123,KA,10,456,34.7,F,1",
     "1,123,K,10,456,24.1,F,1",
     "1,123,Laser,10,456,29.8,F,1",

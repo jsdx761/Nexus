@@ -21,7 +21,6 @@ package com.jsd.x761.nexus;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
-import android.app.Dialog;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -161,7 +160,7 @@ public class AlertsActivity extends DS1ServiceActivity {
       Log.i(TAG, "bindSpeechService.onDone");
 
       // Check if DS1 alerts are enabled
-      if(Configuration.ENABLE_RADAR_ALERTS) {
+      if(Configuration.ENABLE_DS1_ALERTS) {
         if(mDS1ServiceEnabled) {
           mDS1AlertsActive = true;
         }
@@ -169,14 +168,14 @@ public class AlertsActivity extends DS1ServiceActivity {
 
       // Check if crowd-sourced reports are enabled
       if(Configuration.ENABLE_REPORTS) {
-        if(Configuration.DEBUG_INJECT_TEST_REPORTS != 0 || (mReportsEnabled && !mReportsSourceURL.equals(getString(R.string.default_reports_url)))) {
+        if(mReportsEnabled && !mReportsSourceURL.equals(getString(R.string.default_reports_url))) {
           mReportsActive = 1;
         }
       }
 
       // Check if aircraft recognition is enabled
       if(Configuration.ENABLE_AIRCRAFTS) {
-        if(Configuration.DEBUG_INJECT_TEST_AIRCRAFTS != 0 || mAircraftsEnabled) {
+        if(mAircraftsEnabled) {
           // Load aircrafts database
           mAircraftsDatabase = new AircraftsDatabase(AlertsActivity.this);
           if(mAircraftsDatabase.getInterestingAircrafts().size() != 0) {
@@ -217,7 +216,7 @@ public class AlertsActivity extends DS1ServiceActivity {
         Log.i(TAG, "bindDS1Service()");
         bindDS1Service(() -> {
           Log.i(TAG, "bindDS1Service.onDone");
-          if(Configuration.DEBUG_TEST_ALERTS_TIMER != 0) {
+          if(Configuration.DEBUG_TEST_DS1_ALERTS_TIMER != 0) {
             // Inject test background DS1 alerts every few seconds to help
             // test the app without having to use an actual DS1 device
             // everytime
@@ -227,7 +226,12 @@ public class AlertsActivity extends DS1ServiceActivity {
                 onDS1DeviceData();
               }
               finally {
-                mHandler.postDelayed(mDebugBackgroundAlertsTask, MESSAGE_TOKEN, Configuration.DEBUG_TEST_ALERTS_TIMER);
+                for(int r = 1; r < Configuration.DEBUG_TEST_DS1_ALERTS_REPEAT_COUNT; r++) {
+                  mHandler.postDelayed(() -> {
+                    onDS1DeviceData();
+                  }, MESSAGE_TOKEN, Configuration.DEBUG_TEST_DS1_ALERTS_REPEAT_TIMER * r);
+                }
+                mHandler.postDelayed(mDebugBackgroundAlertsTask, MESSAGE_TOKEN, Configuration.DEBUG_TEST_DS1_ALERTS_TIMER);
               }
             };
             mHandler.postDelayed(mDebugBackgroundAlertsTask, MESSAGE_TOKEN, 1);
@@ -430,14 +434,14 @@ public class AlertsActivity extends DS1ServiceActivity {
         }
       }
     }
-    if(Configuration.DEBUG_INJECT_TEST_ALERTS != 0) {
+    if(Configuration.DEBUG_INJECT_TEST_DS1_ALERTS != 0) {
       // Inject test alerts to help test the app without having to
       // use an actual DS1 device everytime
       Log.i(TAG, "injecting test DS1 alerts");
       DS1Service ds1Service = new DS1Service();
       int n = 0;
-      for(String alert : Configuration.DEBUG_TEST_ALERTS) {
-        if(n < Configuration.DEBUG_INJECT_TEST_ALERTS) {
+      for(String alert : Configuration.DEBUG_TEST_DS1_ALERTS) {
+        if(n < Configuration.DEBUG_INJECT_TEST_DS1_ALERTS) {
           alerts.add(Alert.fromDS1Alert(ds1Service.new RD_Alert(alert)));
           n++;
         }
@@ -461,9 +465,6 @@ public class AlertsActivity extends DS1ServiceActivity {
       }
       newAlerts.add(alert);
     }
-    if(newAlerts.size() == 0) {
-      return;
-    }
 
     // Sort alerts by priority
     newAlerts.sort((o1, o2) -> o1.priority - o2.priority);
@@ -474,6 +475,7 @@ public class AlertsActivity extends DS1ServiceActivity {
       mHandler.removeCallbacks(mClearDS1AlertsTask);
       mClearDS1AlertsTask = null;
     }
+
     mAlertsAdapter.setRadarAlerts(newAlerts, () -> startClearAlertsTask());
   }
 
@@ -491,7 +493,7 @@ public class AlertsActivity extends DS1ServiceActivity {
 
     // Clear alerts after a few seconds without receiving any new alerts
     Log.i(TAG, "postDelayed() mClearDS1AlertsTask");
-    mHandler.postDelayed(mClearDS1AlertsTask, MESSAGE_TOKEN, Configuration.ALERTS_CLEAR_TIMER);
+    mHandler.postDelayed(mClearDS1AlertsTask, MESSAGE_TOKEN, Configuration.DS1_ALERTS_CLEAR_TIMER);
   }
 
   protected void onLocationChanged(Location location) {

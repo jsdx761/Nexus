@@ -333,6 +333,13 @@ public class AlertsAdapter extends RecyclerView.Adapter<AlertsAdapter.ViewHolder
     }
 
     Alert alert = alerts.get(pos);
+    if(alert.announced > 1) {
+      Log.i(TAG, String.format("alert announced %d", alert.announced));
+      Log.i(TAG, "playSpeechAnnounce.onDone.run()");
+      onDone.run();
+      return;
+    }
+
     String alertClass = "";
     switch(alert.alertClass) {
       case Alert.ALERT_CLASS_RADAR:
@@ -501,6 +508,7 @@ public class AlertsAdapter extends RecyclerView.Adapter<AlertsAdapter.ViewHolder
       List<Alert> announces = new ArrayList<>();
       for(Alert alert : mRadarAlerts) {
         if(!alert.muted) {
+          alert.announced += 1;
           announces.add(alert);
         }
       }
@@ -512,7 +520,7 @@ public class AlertsAdapter extends RecyclerView.Adapter<AlertsAdapter.ViewHolder
 
           // Announce the alerts
           Log.i(TAG, "playAlertAnnounce() alert pos 0");
-          playAlertAnnounce(announces, "alert", 0, Configuration.RADAR_ALERTS_MAX_SPEECH_ANNOUNCES, Configuration.RADAR_ALERTS_MAX_EARCON_ANNOUNCES, () -> {
+          playAlertAnnounce(announces, "alert", 0, Configuration.DS1_ALERTS_MAX_SPEECH_ANNOUNCES, Configuration.DS1_ALERTS_MAX_EARCON_ANNOUNCES, () -> {
 
             // Abandon audio focus once done
             Log.i(TAG, "abandonAudioFocus()");
