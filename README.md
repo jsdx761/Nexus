@@ -222,9 +222,9 @@ The **Settings** menu provides the following options:
     select it once it shows in the list and the app will automatically connect
     to it later on.
 
-    * **Volume** - Select this to control the volume of your DS1 radar detector
-      directly from the app. I typically set it to 0 if I'm going to be using
-      the voice and sound alerts from the app.
+    * **DS1 Volume** - Select this to control the volume of your DS1 radar
+      detector directly from the app. I typically set it to 0 if I'm going to
+      be using the voice and sound alerts from the app.
 
   * **Crowd-sourced Reports** - Select this to configure the URL of a
     crowd-sourced server similar to Waze for example; note that entering
