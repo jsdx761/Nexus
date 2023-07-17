@@ -22,7 +22,7 @@ package com.jsd.x761.nexus;
  */
 public class Configuration {
 
-  public static final boolean DEBUG = true;
+  public static final boolean DEBUG = false;
   public static final long SPLASH_TIMER = 2000;
   public static final String DS1_SERVICE_SCAN_NAME = "DS1@E1";
   public static final long DS1_SERVICE_CONNECT_WAIT_TIMER = 5000;
