@@ -39,8 +39,8 @@ public class Configuration {
   public static final long AUDIO_EARCON_TIMER = 250;
   public static final long CURRENT_LOCATION_TIMER = 10000;
   public static final boolean USE_COMPUTED_LOCATION_BEARING = true;
-  public static final long LOCATION_AVAILABILTY_ANNOUNCEMENT_TIMER = 2000;
-  public static final float COMPUTED_BEARING_DISTANCE_THRESHOLD = 20.0f;
+  public static final long LOCATION_AVAILABILITY_CHECK_TIMER = 10000;
+  public static final float COMPUTED_BEARING_DISTANCE_THRESHOLD = 40.0f;
   public static final long NETWORK_CONNECT_CHECK_TIMER = 15000;
   public static final int NETWORK_CONNECT_TIMEOUT = 5000;
   public static final int NETWORK_CONNECT_RETRY_COUNT = 2;

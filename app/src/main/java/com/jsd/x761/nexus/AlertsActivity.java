@@ -304,7 +304,6 @@ public class AlertsActivity extends DS1ServiceActivity {
               // become available again soon
               if(mLocationNotAvailableTask != null) {
                 mHandler.removeCallbacks(mLocationNotAvailableTask);
-                mLocationNotAvailableTask = null;
               }
               mLocationNotAvailableTask = () -> {
                 AlertsActivity.this.onLocationChanged(null);
