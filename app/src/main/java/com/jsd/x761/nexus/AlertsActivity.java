@@ -20,8 +20,11 @@
 package com.jsd.x761.nexus;
 
 import android.annotation.SuppressLint;
+import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
@@ -88,6 +91,7 @@ public class AlertsActivity extends DS1ServiceActivity {
   private boolean mNetworkConnected = true;
   private Runnable mNetworkCheckTask;
   private Executor mNetworkCheckTaskExecutor;
+  private boolean mDS1AlertsActive;
   private boolean mReportsEnabled;
   private ImageView mReportsActiveImage;
   private String mReportsSourceURL;
@@ -156,28 +160,10 @@ public class AlertsActivity extends DS1ServiceActivity {
     bindSpeechService(() -> {
       Log.i(TAG, "bindSpeechService.onDone");
 
+      // Check if DS1 alerts are enabled
       if(Configuration.ENABLE_RADAR_ALERTS) {
         if(mDS1ServiceEnabled) {
-          // Bind to the DS1 service
-          Log.i(TAG, "bindDS1Service()");
-          bindDS1Service(() -> {
-            Log.i(TAG, "bindDS1Service.onDone");
-            if(Configuration.DEBUG_TEST_ALERTS_TIMER != 0) {
-              // Inject test background DS1 alerts every few seconds to help
-              // test the app without having to use an actual DS1 device
-              // everytime
-              Log.i(TAG, "using test background DS1 alerts");
-              mDebugBackgroundAlertsTask = () -> {
-                try {
-                  onDS1DeviceData();
-                }
-                finally {
-                  mHandler.postDelayed(mDebugBackgroundAlertsTask, MESSAGE_TOKEN, Configuration.DEBUG_TEST_ALERTS_TIMER);
-                }
-              };
-              mHandler.postDelayed(mDebugBackgroundAlertsTask, MESSAGE_TOKEN, 1);
-            }
-          });
+          mDS1AlertsActive = true;
         }
       }
 
@@ -190,13 +176,63 @@ public class AlertsActivity extends DS1ServiceActivity {
 
       // Check if aircraft recognition is enabled
       if(Configuration.ENABLE_AIRCRAFTS) {
-        if(Configuration.DEBUG_INJECT_TEST_AIRCRAFTS != 0 || (mAircraftsEnabled && !mAircraftsSourceURL.equals(getString(R.string.default_aircrafts_url)))) {
+        if(Configuration.DEBUG_INJECT_TEST_AIRCRAFTS != 0 || mAircraftsEnabled) {
           // Load aircrafts database
           mAircraftsDatabase = new AircraftsDatabase(AlertsActivity.this);
           if(mAircraftsDatabase.getInterestingAircrafts().size() != 0) {
             mAircraftsActive = 1;
           }
         }
+      }
+
+      if(!mDS1AlertsActive && mReportsActive == 0 && mAircraftsActive == 0) {
+        Log.i(TAG, "no alert sources enabled");
+        runOnUiThread(() -> {
+          AlertDialog.Builder d = new AlertDialog.Builder(this);
+          d.setMessage("No alert sources are enabled.\n\nPlease enable and configure some alert sources in Settings.");
+          d.setTitle("Alerts");
+          d.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+              mHandler.postDelayed(() -> {
+                Intent intent = new Intent(AlertsActivity.this, SettingsMenuActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                startActivity(intent);
+                finish();
+              }, MESSAGE_TOKEN, 1);
+            }
+          });
+          d.setOnCancelListener(new DialogInterface.OnCancelListener() {
+            @Override
+            public void onCancel(DialogInterface dialog) {
+              finish();
+            }
+          });
+          d.show();
+        });
+      }
+
+      if(mDS1AlertsActive) {
+        // Bind to the DS1 service
+        Log.i(TAG, "bindDS1Service()");
+        bindDS1Service(() -> {
+          Log.i(TAG, "bindDS1Service.onDone");
+          if(Configuration.DEBUG_TEST_ALERTS_TIMER != 0) {
+            // Inject test background DS1 alerts every few seconds to help
+            // test the app without having to use an actual DS1 device
+            // everytime
+            Log.i(TAG, "using test background DS1 alerts");
+            mDebugBackgroundAlertsTask = () -> {
+              try {
+                onDS1DeviceData();
+              }
+              finally {
+                mHandler.postDelayed(mDebugBackgroundAlertsTask, MESSAGE_TOKEN, Configuration.DEBUG_TEST_ALERTS_TIMER);
+              }
+            };
+            mHandler.postDelayed(mDebugBackgroundAlertsTask, MESSAGE_TOKEN, 1);
+          }
+        });
       }
 
       if(mReportsActive != 0 || mAircraftsActive != 0) {
@@ -273,7 +309,7 @@ public class AlertsActivity extends DS1ServiceActivity {
               mLocationNotAvailableTask = () -> {
                 AlertsActivity.this.onLocationChanged(null);
               };
-              mHandler.postDelayed(mLocationNotAvailableTask, MESSAGE_TOKEN, Configuration.LOCATION_AVAILABILTY_ANNOUNCEMENT_TIMER);
+              mHandler.postDelayed(mLocationNotAvailableTask, MESSAGE_TOKEN, Configuration.LOCATION_AVAILABILITY_CHECK_TIMER);
             }
             else {
               // Cancel any pending location unavailable announcement

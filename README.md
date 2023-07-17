@@ -228,15 +228,17 @@ The **Settings** menu provides the following options:
 
   * **Crowd-sourced Reports** - Select this to configure the URL of a
     crowd-sourced server similar to Waze for example; note that entering
-    https://www.waze.com may work as Nexus uses a protocol similar to the
-    Waze protocol, but make sure that doesn't violate the Waze terms of
-    service in your country;
+    [https://www.waze.com](https://www.waze.com) may work as Nexus uses a
+    protocol compatible with the Waze protocol, but make sure that using the
+    Waze server in that fashion doesn't violate the Waze terms of service in
+    your country;
 
   * **Aircraft Alerts** - Select this to configure the URL of an aircraft
     tracking server; if you are using the default server
-    [https://opensky-network.org/](https://opensky-network.org/), entering
-    your OpenSky user info will allow you to get alerts every few seconds
-    instead of minutes.
+    [https://opensky-network.org](https://opensky-network.org), entering
+    your OpenSky user info will give you a better API call rate limit
+    allowing the app to get alerts every few seconds instead of every few
+    minutes.
 
 Voice announcements and sound notifications will play on the phone's
 **Music** audio stream. You will need to select your phone's Bluetooth as

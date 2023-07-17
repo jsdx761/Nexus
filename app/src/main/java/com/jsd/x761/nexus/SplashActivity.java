@@ -22,9 +22,11 @@ package com.jsd.x761.nexus;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothManager;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
@@ -81,12 +83,24 @@ public class SplashActivity extends AppCompatActivity {
       this.checkSelfPermission(Manifest.permission.ACCESS_BACKGROUND_LOCATION) != PackageManager.PERMISSION_GRANTED) {
       runOnUiThread(() -> {
         AlertDialog.Builder b = new AlertDialog.Builder(SplashActivity.this);
-        b.setMessage("Please allow Nexus to access this device's precise location all the time");
+        b.setMessage("Please allow Nexus to access this device's precise location all the time.\n\n" +
+          "This will be needed to be able to look for crowd-sourced alerts and aircrafts close to your location, including when the app is in the background.");
         b.setTitle("Location Access");
-        b.setPositiveButton(android.R.string.ok, null);
-        b.setOnDismissListener(dialog -> {
-          Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-          startActivityForResult(intent, FINE_LOCATION_REQUEST);
+        b.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+          @Override
+          public void onClick(DialogInterface dialog, int which) {
+            Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+            startActivityForResult(intent, FINE_LOCATION_REQUEST);
+          }
+        });
+        b.setOnCancelListener(new DialogInterface.OnCancelListener() {
+          @Override
+          public void onCancel(DialogInterface dialog) {
+            Log.i(TAG, "Permission to access this device's precise location all the time was denied");
+            runOnUiThread(() -> Toast.makeText(SplashActivity.this, "Permission to access this device's precise location all the time was denied",
+              Toast.LENGTH_SHORT).show());
+            finish();
+          }
         });
         b.show();
       });
@@ -102,10 +116,22 @@ public class SplashActivity extends AppCompatActivity {
     if(this.checkSelfPermission(Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED) {
       runOnUiThread(() -> {
         AlertDialog.Builder b = new AlertDialog.Builder(SplashActivity.this);
-        b.setMessage("Please allow Nexus to find and connect to nearby devices");
+        b.setMessage("Please allow Nexus to find and connect to nearby devices.\n\nThis will be needed to find and connect to your DS1 radar detector.");
         b.setTitle("Nearby Device Access");
-        b.setPositiveButton(android.R.string.ok, null);
-        b.setOnDismissListener(dialog -> requestPermissions(new String[]{Manifest.permission.BLUETOOTH_SCAN}, BLUETOOTH_SCAN_REQUEST));
+        b.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+          @Override
+          public void onClick(DialogInterface dialog, int which) {
+            requestPermissions(new String[]{Manifest.permission.BLUETOOTH_SCAN}, BLUETOOTH_SCAN_REQUEST);
+          }
+        });
+        b.setOnCancelListener(new DialogInterface.OnCancelListener() {
+          @Override
+          public void onCancel(DialogInterface dialog) {
+            Log.i(TAG, "Permission to find and connect to nearby devices was denied");
+            runOnUiThread(() -> Toast.makeText(SplashActivity.this, "Permission to find and connect to nearby devices was denied", Toast.LENGTH_SHORT).show());
+            finish();
+          }
+        });
         b.show();
       });
     }
@@ -126,10 +152,22 @@ public class SplashActivity extends AppCompatActivity {
     if(this.checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
       runOnUiThread(() -> {
         AlertDialog.Builder b = new AlertDialog.Builder(SplashActivity.this);
-        b.setMessage("Please allow Nexus to connect to Bluetooth devices");
+        b.setMessage("Please allow Nexus to connect to Bluetooth devices.\n\nThis will be needed to connect to your DS1 radar detector.");
         b.setTitle("Bluetooth Connect Access");
-        b.setPositiveButton(android.R.string.ok, null);
-        b.setOnDismissListener(dialog -> requestPermissions(new String[]{Manifest.permission.BLUETOOTH_CONNECT}, BLUETOOTH_CONNECT_REQUEST));
+        b.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+          @Override
+          public void onClick(DialogInterface dialog, int which) {
+            requestPermissions(new String[]{Manifest.permission.BLUETOOTH_CONNECT}, BLUETOOTH_CONNECT_REQUEST);
+          }
+        });
+        b.setOnCancelListener(new DialogInterface.OnCancelListener() {
+          @Override
+          public void onCancel(DialogInterface dialog) {
+            Log.i(TAG, "Permission to connect to Bluetooth devices was denied");
+            runOnUiThread(() -> Toast.makeText(SplashActivity.this, "Permission to connect to Bluetooth devices was denied", Toast.LENGTH_SHORT).show());
+            finish();
+          }
+        });
         b.show();
       });
     }
@@ -151,12 +189,30 @@ public class SplashActivity extends AppCompatActivity {
       return;
     }
 
-    BluetoothAdapter bluetoothAdapter;
-    bluetoothAdapter = bluetoothManager.getAdapter();
+    BluetoothAdapter bluetoothAdapter = bluetoothManager.getAdapter();
 
     // Enable Bluetooth
     if(!bluetoothAdapter.isEnabled()) {
-      startActivityForResult(new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE), 3);
+      runOnUiThread(() -> {
+        AlertDialog.Builder b = new AlertDialog.Builder(SplashActivity.this);
+        b.setMessage("Please enable Bluetooth.\n\nThis will be needed to be able to connect to your DS1 radar detector.");
+        b.setTitle("Bluetooth");
+        b.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+          @Override
+          public void onClick(DialogInterface dialog, int which) {
+            Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            startActivityForResult(intent, 3);
+          }
+        });
+        b.setOnCancelListener(new DialogInterface.OnCancelListener() {
+          @Override
+          public void onCancel(DialogInterface dialog) {
+            runOnUiThread(() -> Toast.makeText(SplashActivity.this, "Permission to enable Bluetooth was denied", Toast.LENGTH_SHORT).show());
+            finish();
+          }
+        });
+        b.show();
+      });
     }
     else {
       // Start the DS1 device scan activity
@@ -172,12 +228,26 @@ public class SplashActivity extends AppCompatActivity {
 
     if(requestCode == BLUETOOTH_ENABLE_REQUEST) {
       if(resultCode == RESULT_OK) {
-        // Start the main menu activity
-        startMainMenuActivity();
+        // Get the Bluetooth manager and adapter
+        BluetoothManager bluetoothManager = (BluetoothManager)getSystemService(Context.BLUETOOTH_SERVICE);
+        if(bluetoothManager == null) {
+          Log.i(TAG, "Failed to get Bluetooth manager");
+          runOnUiThread(() -> Toast.makeText(SplashActivity.this, "Failed to get Bluetooth manager", Toast.LENGTH_SHORT).show());
+          finish();
+          return;
+        }
+
+        // Check that Bluetooth is enabled
+        BluetoothAdapter bluetoothAdapter = bluetoothManager.getAdapter();
+        if(bluetoothAdapter.isEnabled()) {
+          runOnUiThread(() -> Toast.makeText(SplashActivity.this, "Permission to enable Bluetooth was granted", Toast.LENGTH_SHORT).show());
+          // Start the main menu activity
+          startMainMenuActivity();
+          return;
+        }
       }
-      else {
-        finish();
-      }
+      runOnUiThread(() -> Toast.makeText(SplashActivity.this, "Permission to enable Bluetooth was denied", Toast.LENGTH_SHORT).show());
+      finish();
     }
     else if(requestCode == FINE_LOCATION_REQUEST) {
       requestPermissions(new String[]{
@@ -208,6 +278,8 @@ public class SplashActivity extends AppCompatActivity {
     if(requestCode == BLUETOOTH_REQUEST) {
       if(grantResults.length > 0) {
         if(grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+          Log.i(TAG, "Permission to use Bluetooth was granted");
+          runOnUiThread(() -> Toast.makeText(SplashActivity.this, "Permission to use Bluetooth was granted", Toast.LENGTH_SHORT).show());
           checkFineLocationPermission();
           return;
         }
@@ -218,20 +290,26 @@ public class SplashActivity extends AppCompatActivity {
 
     }
     else if(requestCode == FINE_LOCATION_REQUEST) {
-      if(grantResults.length > 0) {
-        if(grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+      if(grantResults.length == 2) {
+        if(grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
+          Log.i(TAG, "Permission to access this device's precise location all the time was granted");
+          runOnUiThread(() -> Toast.makeText(SplashActivity.this, "Permission to access this device's precise location all the time was granted",
+            Toast.LENGTH_SHORT).show());
           checkBluetoothScanPermission();
           return;
         }
       }
-      Log.i(TAG, "Permission to access this device's precise location was denied");
-      runOnUiThread(() -> Toast.makeText(SplashActivity.this, "Permission to access this device's precise location was denied", Toast.LENGTH_SHORT).show());
+      Log.i(TAG, "Permission to access this device's precise location all the time was denied");
+      runOnUiThread(() -> Toast.makeText(SplashActivity.this, "Permission to access this device's precise location all the time was denied",
+        Toast.LENGTH_SHORT).show());
       finish();
 
     }
     else if(requestCode == BLUETOOTH_SCAN_REQUEST) {
       if(grantResults.length > 0) {
         if(grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+          Log.i(TAG, "Permission to find and connect to nearby devices was granted");
+          runOnUiThread(() -> Toast.makeText(SplashActivity.this, "Permission to find and connect to nearby devices was granted", Toast.LENGTH_SHORT).show());
           checkBluetoothConnectPermission();
           return;
         }
@@ -244,6 +322,8 @@ public class SplashActivity extends AppCompatActivity {
     else if(requestCode == BLUETOOTH_CONNECT_REQUEST) {
       if(grantResults.length > 0) {
         if(grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+          Log.i(TAG, "Permission to connect to Bluetooth devices was granted");
+          runOnUiThread(() -> Toast.makeText(SplashActivity.this, "Permission to connect to Bluetooth devices was granted", Toast.LENGTH_SHORT).show());
           enableBluetooth();
           return;
         }

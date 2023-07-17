@@ -10,10 +10,10 @@
     <string name="key_ds1_autoconnect_address">NexusDS1AutoconnectAddress</string>
     <string name="key_reports_enabled">NexusReportsEnabled</string>
     <string name="key_reports_url">NexusReportsURL</string>
-    <string name="default_reports_url">https://www.example.com</string>
+    <string name="default_reports_url">https://your-crowd-sourced-alert-server</string>
     <string name="key_aircrafts_enabled">NexusAircraftsEnabled</string>
     <string name="key_aircrafts_url">NexusAircraftsURL</string>
-    <string name="default_aircrafts_url">https://www.example.com</string>
+    <string name="default_aircrafts_url">https://opensky-network.org</string>
     <string name="key_aircrafts_user">NexusAircraftsUser</string>
     <string name="default_aircrafts_user">user</string>
     <string name="key_aircrafts_password">NexusAircraftsPassword</string>
