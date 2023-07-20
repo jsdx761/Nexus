@@ -288,11 +288,29 @@ public class AlertsActivity extends DS1ServiceActivity {
           @Override
           public void onLocationResult(@NonNull LocationResult locationResult) {
             Log.i(TAG, String.format("locationCallback.onLocationResult %s", locationResult));
-            if(locationResult == null) {
-              AlertsActivity.this.onLocationChanged(null);
+            Location location = null;
+            if(locationResult != null) {
+              location = locationResult.getLastLocation();
+            }
+            if(location == null) {
+              // Schedule a location unavailable announcement after some delay
+              // as the location may become available again in the meantime
+              if(mLocationNotAvailableTask == null) {
+                mLocationNotAvailableTask = () -> {
+                  AlertsActivity.this.onLocationChanged(null);
+                };
+                mHandler.postDelayed(mLocationNotAvailableTask, MESSAGE_TOKEN, Configuration.LOCATION_AVAILABILITY_CHECK_TIMER);
+              }
             }
             else {
-              AlertsActivity.this.onLocationChanged(locationResult.getLastLocation());
+              // Cancel any pending location unavailable announcement
+              if(mLocationNotAvailableTask != null) {
+                mHandler.removeCallbacks(mLocationNotAvailableTask);
+                mLocationNotAvailableTask = null;
+              }
+
+              // Report the location
+              AlertsActivity.this.onLocationChanged(location);
               if(mOnGetInitialLocationTask != null) {
                 mHandler.postDelayed(mOnGetInitialLocationTask, MESSAGE_TOKEN, 1);
                 mOnGetInitialLocationTask = null;
@@ -304,28 +322,20 @@ public class AlertsActivity extends DS1ServiceActivity {
           public void onLocationAvailability(@NonNull LocationAvailability locationAvailability) {
             Log.i(TAG, String.format("locationCallback.onLocationAvailability %b", locationAvailability.isLocationAvailable()));
             if(!locationAvailability.isLocationAvailable()) {
-              // Delay the location unavailable announcement a bit as it may
-              // become available again soon
-              if(mLocationNotAvailableTask != null) {
-                mHandler.removeCallbacks(mLocationNotAvailableTask);
-              }
-              mLocationNotAvailableTask = () -> {
-                AlertsActivity.this.onLocationChanged(null);
-              };
-              mHandler.postDelayed(mLocationNotAvailableTask, MESSAGE_TOKEN, Configuration.LOCATION_AVAILABILITY_CHECK_TIMER);
-            }
-            else {
-              // Cancel any pending location unavailable announcement
-              if(mLocationNotAvailableTask != null) {
-                mHandler.removeCallbacks(mLocationNotAvailableTask);
-                mLocationNotAvailableTask = null;
+              // Schedule a location unavailable announcement after some delay
+              // as the location may become available again in the meantime
+              if(mLocationNotAvailableTask == null) {
+                mLocationNotAvailableTask = () -> {
+                  AlertsActivity.this.onLocationChanged(null);
+                };
+                mHandler.postDelayed(mLocationNotAvailableTask, MESSAGE_TOKEN, Configuration.LOCATION_AVAILABILITY_CHECK_TIMER);
               }
             }
           }
         };
 
         Log.i(TAG, "locationclient.requestLocationUpdates()");
-        mLocationRequest = new LocationRequest.Builder(Priority.PRIORITY_BALANCED_POWER_ACCURACY, Configuration.CURRENT_LOCATION_TIMER).build();
+        mLocationRequest = new LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, Configuration.CURRENT_LOCATION_TIMER).build();
         mLocationClient.requestLocationUpdates(mLocationRequest, mLocationCallback, Looper.getMainLooper());
       }
     });

@@ -37,7 +37,7 @@ public class Configuration {
   public static final float AUDIO_SPEECH_PITCH = 0.95f;
   public static final float AUDIO_SPEECH_RATE = 1.1f;
   public static final long AUDIO_EARCON_TIMER = 250;
-  public static final long CURRENT_LOCATION_TIMER = 10000;
+  public static final long CURRENT_LOCATION_TIMER = 5000;
   public static final boolean USE_COMPUTED_LOCATION_BEARING = true;
   public static final long LOCATION_AVAILABILITY_CHECK_TIMER = 10000;
   public static final float COMPUTED_BEARING_DISTANCE_THRESHOLD = 40.0f;
