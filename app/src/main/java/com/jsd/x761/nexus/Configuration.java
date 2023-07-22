@@ -23,13 +23,13 @@ package com.jsd.x761.nexus;
 public class Configuration {
 
   public static final boolean DEBUG = false;
-  public static final boolean DEMO = true;
+  public static final boolean DEMO = false;
   public static final long SPLASH_TIMER = 2000;
   public static final String DS1_SERVICE_SCAN_NAME = "DS1@E1";
   public static final long DS1_SERVICE_CONNECT_WAIT_TIMER = 5000;
   public static final long DS1_SERVICE_SETUP_TIMER = 1000;
   public static final long DS1_SERVICE_RECONNECT_TIMER = 5000;
-  public static final long CLEAR_REMINDER_TIMER = 10000;
+  public static final long ALL_CLEAR_REMINDER_TIMER = 10000;
   public static final boolean ENABLE_DS1_ALERTS = true;
   public static final long DS1_ALERTS_CLEAR_TIMER = 10000;
   public static final int DS1_ALERTS_MAX_SPEECH_ANNOUNCES = DEBUG ? 1 : 3;
@@ -60,10 +60,10 @@ public class Configuration {
   public static final int AIRCRAFTS_CONNECT_TIMEOUT = 5000;
   public static final boolean DEBUG_USE_NULL_DS1_SERVICE = DEBUG;
   public static final long DEBUG_NULL_DS1_SERVICE_SCAN_TIMER = 2000;
-  public static final int DEBUG_INJECT_TEST_DS1_ALERTS = DEBUG ? 1 : 0;
-  public static final long DEBUG_TEST_DS1_ALERTS_TIMER = DEBUG ? 40000 : 0;
-  public static final long DEBUG_TEST_DS1_ALERTS_REPEAT_TIMER = DEBUG ? 300 : 0;
-  public static final long DEBUG_TEST_DS1_ALERTS_REPEAT_COUNT = DEBUG ? 5 : 0;
+  public static final int DEBUG_INJECT_TEST_DS1_ALERTS = DEBUG ? 1 : DEMO ? 1 : 0;
+  public static final long DEBUG_TEST_DS1_ALERTS_TIMER = DEBUG ? 40000 : DEMO ? 40000 : 0;
+  public static final long DEBUG_TEST_DS1_ALERTS_REPEAT_TIMER = DEBUG ? 300 : DEMO ? 300 : 0;
+  public static final long DEBUG_TEST_DS1_ALERTS_REPEAT_COUNT = DEBUG ? 5 : DEMO ? 5 : 0;
 
   public static final String[] DEBUG_TEST_DS1_ALERTS = DEBUG_INJECT_TEST_DS1_ALERTS != 0 ? new String[]{
     "1,123,KA,10,456,34.7,F,1",
@@ -76,7 +76,6 @@ public class Configuration {
   public static final boolean DEBUG_USE_ZERO_BEARING = DEBUG;
   public static final boolean DEBUG_ANNOUNCE_VEHICLE_BEARING = false;
   public static final int DEBUG_INJECT_TEST_REPORTS = DEBUG ? 1 : 0;
-  public static final long DEBUG_TEST_REPORTS_TIMER = DEBUG ? 40000 : 0;
   public static final float REPORTS_MAX_DISTANCE = DEBUG ? 50.0f : DEMO ? 4.0f : 2.0f;
   public static final float DEMO_REPORTS_MAX_ANNOUNCED_DISTANCE = 2.0f;
   public static final long REPORTS_REMINDER_TIMER = 60000;
@@ -174,7 +173,6 @@ public class Configuration {
     """ : "";
 
   public static final int DEBUG_INJECT_TEST_AIRCRAFTS = DEBUG ? 1 : DEMO ? 1 : 0;
-  public static final long DEBUG_TEST_AIRCRAFTS_TIMER = DEBUG ? 40000 : DEMO ? 40000 : 0;
   public static final float AIRCRAFTS_MAX_DISTANCE = DEBUG ? 50.0f : DEMO ? 50.0f : 5.0f;
   public static final float DEMO_AIRCRAFTS_MAX_ANNOUNCED_DISTANCE = 5.0f;
   public static final long AIRCRAFTS_REMINDER_TIMER = 60000;

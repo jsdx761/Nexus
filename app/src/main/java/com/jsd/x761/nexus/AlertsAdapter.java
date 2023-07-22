@@ -123,9 +123,9 @@ public class AlertsAdapter extends RecyclerView.Adapter<AlertsAdapter.ViewHolder
         mSpeechService.announceEvent("Aircraft alerts are all clear now", () -> {
         });
       }
-      mHandler.postDelayed(mAllClearTask, MESSAGE_TOKEN, Configuration.CLEAR_REMINDER_TIMER);
+      mHandler.postDelayed(mAllClearTask, MESSAGE_TOKEN, Configuration.ALL_CLEAR_REMINDER_TIMER);
     };
-    mHandler.postDelayed(mAllClearTask, MESSAGE_TOKEN, Configuration.CLEAR_REMINDER_TIMER);
+    mHandler.postDelayed(mAllClearTask, MESSAGE_TOKEN, Configuration.ALL_CLEAR_REMINDER_TIMER);
   }
 
   @NonNull
@@ -379,6 +379,10 @@ public class AlertsAdapter extends RecyclerView.Adapter<AlertsAdapter.ViewHolder
     // Play the sound indicating the class of alert on the voice call stream
     Runnable playTask = () -> {
       mSpeechService.playEarcon(earcon);
+      mHandler.postDelayed(() -> {
+        Log.i(TAG, String.format("playEarconAnnounce.onDone.run() %b", true));
+        onDone.run(true);
+      }, MESSAGE_TOKEN, Configuration.AUDIO_EARCON_TIMER);
     };
     if(!audioFocus) {
       mSpeechService.requestAudioFocus(() -> {
@@ -388,11 +392,6 @@ public class AlertsAdapter extends RecyclerView.Adapter<AlertsAdapter.ViewHolder
     else {
       playTask.run();
     }
-
-    mHandler.postDelayed(() -> {
-      Log.i(TAG, String.format("playEarconAnnounce.onDone.run() %b", true));
-      onDone.run(true);
-    }, MESSAGE_TOKEN, Configuration.AUDIO_EARCON_TIMER);
   }
 
   protected void playSpeechAnnounce(List<Alert> alerts, int pos, boolean audioFocus, int maxSpeech, PlayAlertAnnounceOnDone onDone) {
