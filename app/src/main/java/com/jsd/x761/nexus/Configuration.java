@@ -77,7 +77,7 @@ public class Configuration {
   public static final boolean DEBUG_ANNOUNCE_VEHICLE_BEARING = false;
   public static final int DEBUG_INJECT_TEST_REPORTS = DEBUG ? 1 : 0;
   public static final long DEBUG_TEST_REPORTS_TIMER = DEBUG ? 40000 : 0;
-  public static final float REPORTS_MAX_DISTANCE = DEBUG ? 50.0f : DEMO ? 15.0f : 2.0f;
+  public static final float REPORTS_MAX_DISTANCE = DEBUG ? 50.0f : DEMO ? 4.0f : 2.0f;
   public static final float DEMO_REPORTS_MAX_ANNOUNCED_DISTANCE = 2.0f;
   public static final long REPORTS_REMINDER_TIMER = 60000;
   public static final float REPORTS_REMINDER_DISTANCE = 0.25f;
