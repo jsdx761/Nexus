@@ -191,6 +191,9 @@ public class Alert {
     }
     try {
       alert.street = jsonReport.getString("street");
+      if(alert.street.startsWith("to ") && alert.street.length() > 3) {
+        alert.street = alert.street.substring(3);
+      }
     }
     catch(JSONException e) {
     }
