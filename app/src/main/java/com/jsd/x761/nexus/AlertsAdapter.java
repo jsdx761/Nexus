@@ -70,21 +70,20 @@ public class AlertsAdapter extends RecyclerView.Adapter<AlertsAdapter.ViewHolder
       if(mReportAlerts.size() > 0) {
         List<Alert> announces = new ArrayList<>();
         announces.add(mReportAlerts.get(0));
-        // Request audio focus and duck current audio
-        Log.i(TAG, "requestAudioFocus()");
-        mSpeechService.requestAudioFocus(() -> {
 
-          // Announce the reports
-          Log.i(TAG, "playAlertAnnounce() report pos 0");
-          AlertsAdapter.this.playAlertAnnounce(announces, "report", 0, 0, 1, () -> {
+        // Announce the reports
+        Log.i(TAG, "playAlertAnnounce() report pos 0");
+        AlertsAdapter.this.playAlertAnnounce(
+          announces, "report", 0, false, 0, 1, (audioFocus) -> {
 
             // Abandon audio focus once done
-            Log.i(TAG, "abandonAudioFocus()");
-            mSpeechService.abandonAudioFocus(() -> {
-              Log.i(TAG, "setReportAlerts.onDone.run()");
-            });
+            if(audioFocus) {
+              Log.i(TAG, "abandonAudioFocus()");
+              mSpeechService.abandonAudioFocus(() -> {
+                Log.i(TAG, "setReportAlerts.onDone.run()");
+              });
+            }
           });
-        });
       }
       mHandler.postDelayed(mReportsReminderTask, MESSAGE_TOKEN, Configuration.REPORTS_REMINDER_TIMER);
     };
@@ -94,21 +93,20 @@ public class AlertsAdapter extends RecyclerView.Adapter<AlertsAdapter.ViewHolder
       if(mAircraftAlerts.size() > 0) {
         List<Alert> announces = new ArrayList<>();
         announces.add(mAircraftAlerts.get(0));
-        // Request audio focus and duck current audio
-        Log.i(TAG, "requestAudioFocus()");
-        mSpeechService.requestAudioFocus(() -> {
 
-          // Announce the aircraft state vectors
-          Log.i(TAG, "playAlertAnnounce() report pos 0");
-          AlertsAdapter.this.playAlertAnnounce(announces, "aircraft", 0, 0, 1, () -> {
+        // Announce the aircraft state vectors
+        Log.i(TAG, "playAlertAnnounce() report pos 0");
+        AlertsAdapter.this.playAlertAnnounce(
+          announces, "aircraft", 0, false, 0, 1, (audioFocus) -> {
 
             // Abandon audio focus once done
-            Log.i(TAG, "abandonAudioFocus()");
-            mSpeechService.abandonAudioFocus(() -> {
-              Log.i(TAG, "setReportAlerts.onDone.run()");
-            });
+            if(audioFocus) {
+              Log.i(TAG, "abandonAudioFocus()");
+              mSpeechService.abandonAudioFocus(() -> {
+                Log.i(TAG, "setReportAlerts.onDone.run()");
+              });
+            }
           });
-        });
       }
       mHandler.postDelayed(mAircraftsReminderTask, MESSAGE_TOKEN, Configuration.AIRCRAFTS_REMINDER_TIMER);
     };
@@ -225,10 +223,39 @@ public class AlertsAdapter extends RecyclerView.Adapter<AlertsAdapter.ViewHolder
       vh.frequencyOrDistanceText.setText("");
       vh.bearingText.setText(String.format("%d o'clock", alert.bearing));
       vh.strengthProgressBar.setProgress(Math.round(Geospatial.getStrength(alert.distance, Configuration.REPORTS_MAX_DISTANCE) * 100.0f));
-      vh.banddOrLocationText.setText(alert.street.length() != 0 ? alert.street : alert.city);
+      String locationText;
+      if(alert.street.length() != 0) {
+        if("POLICE_HIDING".equals(alert.subType)) {
+          locationText = String.format("hidden on %s", alert.street);
+        }
+        else {
+          locationText = String.format("on %s", alert.street);
+        }
+      }
+      else if(alert.city.length() != 0) {
+        if("POLICE_HIDING".equals(alert.subType)) {
+          locationText = String.format("hidden in %s", alert.city);
+        }
+        else {
+          locationText = String.format("in %s", alert.city);
+        }
+      }
+      else {
+        if("POLICE_HIDING".equals(alert.subType)) {
+          locationText = "hidden at unknown location";
+        }
+        else {
+          locationText = "at unknown location";
+        }
+      }
+      vh.banddOrLocationText.setText(locationText);
       if(alert.distance != 0) {
         DecimalFormat df = new DecimalFormat("0.#");
-        vh.frequencyOrDistanceText.setText(String.format("%s %s", df.format(alert.distance), alert.distance >= 2.0f ? "miles" : "mile"));
+        float distance = alert.distance;
+        if(Configuration.DEMO) {
+          distance = Math.min(alert.distance, Configuration.DEMO_REPORTS_MAX_ANNOUNCED_DISTANCE);
+        }
+        vh.frequencyOrDistanceText.setText(String.format("%s %s", df.format(distance), distance >= 2.0f ? "miles" : "mile"));
       }
       else {
         vh.frequencyOrDistanceText.setText("");
@@ -247,10 +274,14 @@ public class AlertsAdapter extends RecyclerView.Adapter<AlertsAdapter.ViewHolder
       vh.frequencyOrDistanceText.setText("");
       vh.bearingText.setText(String.format("%d o'clock", alert.bearing));
       vh.strengthProgressBar.setProgress(Math.round(Geospatial.getStrength(alert.distance, Configuration.AIRCRAFTS_MAX_DISTANCE) * 100.0f));
-      vh.banddOrLocationText.setText(alert.owner.length() != 0 ? alert.owner : "Unidentified");
+      vh.banddOrLocationText.setText(alert.owner.length() != 0 ? alert.owner : "unidentified");
       if(alert.distance != 0) {
         DecimalFormat df = new DecimalFormat("0.#");
-        vh.frequencyOrDistanceText.setText(String.format("%s %s", df.format(alert.distance), alert.distance >= 2.0f ? "miles" : "mile"));
+        float distance = alert.distance;
+        if(Configuration.DEMO) {
+          distance = Math.min(alert.distance, Configuration.DEMO_AIRCRAFTS_MAX_ANNOUNCED_DISTANCE);
+        }
+        vh.frequencyOrDistanceText.setText(String.format("%s %s", df.format(distance), distance >= 2.0f ? "miles" : "mile"));
       }
       else {
         vh.frequencyOrDistanceText.setText("");
@@ -284,15 +315,44 @@ public class AlertsAdapter extends RecyclerView.Adapter<AlertsAdapter.ViewHolder
     return mAircraftAlerts;
   }
 
-  private void playEarconAnnounce(List<Alert> alerts, int pos, int maxEarcons, Runnable onDone) {
+  private void playEarconAnnounce(List<Alert> alerts, int pos, boolean audioFocus, int maxEarcons, PlayAlertAnnounceOnDone onDone) {
     Log.i(TAG, String.format("playEarconAnnounce %d", pos));
     if(pos >= maxEarcons) {
-      Log.i(TAG, "playEarconAnnounce.onDone.run()");
-      onDone.run();
+      mHandler.postDelayed(() -> {
+        Log.i(TAG, String.format("playEarconAnnounce.onDone.run() %b", audioFocus));
+        onDone.run(audioFocus);
+      }, MESSAGE_TOKEN, 1);
       return;
     }
 
     Alert alert = alerts.get(pos);
+
+    if(alert.alertClass == Alert.ALERT_CLASS_REPORT) {
+      if(!Configuration.REPORTS_EARCON_REMINDER) {
+        if(alert.announced > 0) {
+          Log.i(TAG, String.format("report alert earcon played %d", alert.announced));
+          mHandler.postDelayed(() -> {
+            Log.i(TAG, "playEarconAnnounce.onDone.run()");
+            onDone.run(audioFocus);
+          }, MESSAGE_TOKEN, 1);
+          return;
+        }
+      }
+    }
+
+    if(alert.alertClass == Alert.ALERT_CLASS_AIRCRAFT) {
+      if(!Configuration.AIRCRAFTS_EARCON_REMINDER) {
+        if(alert.announced > 0) {
+          Log.i(TAG, String.format("aircraft alert earcon played %d", alert.announced));
+          mHandler.postDelayed(() -> {
+            Log.i(TAG, "playEarconAnnounce.onDone.run()");
+            onDone.run(audioFocus);
+          }, MESSAGE_TOKEN, 1);
+          return;
+        }
+      }
+    }
+
     String earcon;
     if(alert.alertClass == Alert.ALERT_CLASS_RADAR) {
       earcon = switch(alert.band) {
@@ -315,28 +375,43 @@ public class AlertsAdapter extends RecyclerView.Adapter<AlertsAdapter.ViewHolder
       };
     }
 
+
     // Play the sound indicating the class of alert on the voice call stream
-    Runnable nextAlertTask = () -> {
-      Log.i(TAG, "playEarconAnnounce.onDone.run()");
-      onDone.run();
+    Runnable playTask = () -> {
+      mSpeechService.playEarcon(earcon);
     };
-    mSpeechService.playEarcon(earcon);
-    mHandler.postDelayed(nextAlertTask, MESSAGE_TOKEN, Configuration.AUDIO_EARCON_TIMER);
+    if(!audioFocus) {
+      mSpeechService.requestAudioFocus(() -> {
+        playTask.run();
+      });
+    }
+    else {
+      playTask.run();
+    }
+
+    mHandler.postDelayed(() -> {
+      Log.i(TAG, String.format("playEarconAnnounce.onDone.run() %b", true));
+      onDone.run(true);
+    }, MESSAGE_TOKEN, Configuration.AUDIO_EARCON_TIMER);
   }
 
-  protected void playSpeechAnnounce(List<Alert> alerts, int pos, int maxSpeech, Runnable onDone) {
+  protected void playSpeechAnnounce(List<Alert> alerts, int pos, boolean audioFocus, int maxSpeech, PlayAlertAnnounceOnDone onDone) {
     Log.i(TAG, String.format("playSpeechAnnounce %d", pos));
     if(pos >= maxSpeech) {
-      Log.i(TAG, "playSpeechAnnounce.onDone.run()");
-      onDone.run();
+      mHandler.postDelayed(() -> {
+        Log.i(TAG, "playSpeechAnnounce.onDone.run()");
+        onDone.run(audioFocus);
+      }, MESSAGE_TOKEN, 1);
       return;
     }
 
     Alert alert = alerts.get(pos);
     if(alert.announced > 1) {
       Log.i(TAG, String.format("alert announced %d", alert.announced));
-      Log.i(TAG, "playSpeechAnnounce.onDone.run()");
-      onDone.run();
+      mHandler.postDelayed(() -> {
+        Log.i(TAG, "playSpeechAnnounce.onDone.run()");
+        onDone.run(audioFocus);
+      }, MESSAGE_TOKEN, 1);
       return;
     }
 
@@ -412,14 +487,39 @@ public class AlertsAdapter extends RecyclerView.Adapter<AlertsAdapter.ViewHolder
       }
       if(alert.distance != 0) {
         DecimalFormat df = new DecimalFormat("0.#");
-        speech += String.format(" %s %s away", df.format(alert.distance), alert.distance >= 2.0f ? "miles" : "mile");
+        float distance = alert.distance;
+        if(Configuration.DEMO) {
+          distance = Math.min(alert.distance, Configuration.DEMO_REPORTS_MAX_ANNOUNCED_DISTANCE);
+        }
+        speech += String.format(" %s %s away", df.format(distance), distance >= 2.0f ? "miles" : "mile");
       }
+      String locationText;
       if(alert.street.length() != 0) {
-        speech += String.format(" on %s", alert.street);
+        if("POLICE_HIDING".equals(alert.subType)) {
+          locationText = String.format("hidden on %s", alert.street);
+        }
+        else {
+          locationText = String.format("on %s", alert.street);
+        }
       }
       else if(alert.city.length() != 0) {
-        speech += String.format(" in %s", alert.city);
+        if("POLICE_HIDING".equals(alert.subType)) {
+          locationText = String.format("hidden in %s", alert.city);
+        }
+        else {
+          locationText = String.format("in %s", alert.city);
+        }
       }
+      else {
+        if("POLICE_HIDING".equals(alert.subType)) {
+          locationText = "hidden at unknown location";
+        }
+        else {
+          locationText = "at unknown location";
+        }
+      }
+
+      speech += String.format(" %s", locationText);
     }
     else if(alert.alertClass == Alert.ALERT_CLASS_AIRCRAFT) {
       // For aircraft state vectors, the speech announce includes the
@@ -444,7 +544,11 @@ public class AlertsAdapter extends RecyclerView.Adapter<AlertsAdapter.ViewHolder
       }
       if(alert.distance != 0) {
         DecimalFormat df = new DecimalFormat("0.#");
-        speech += String.format(" %s %s away", df.format(alert.distance), alert.distance >= 2.0f ? "miles" : "mile");
+        float distance = alert.distance;
+        if(Configuration.DEMO) {
+          distance = Math.min(alert.distance, Configuration.DEMO_AIRCRAFTS_MAX_ANNOUNCED_DISTANCE);
+        }
+        speech += String.format(" %s %s away", df.format(distance), distance >= 2.0f ? "miles" : "mile");
       }
     }
     else {
@@ -453,39 +557,55 @@ public class AlertsAdapter extends RecyclerView.Adapter<AlertsAdapter.ViewHolder
       speech += alertClass;
     }
 
+    // Play the speech announce on the voice call stream
     String uuid = UUID.randomUUID().toString();
     mSpeechService.addOnUtteranceProgressCallback(uuid, () -> {
       Log.i(TAG, String.format("UtteranceProgressListener.onDone %s", uuid));
       mSpeechService.removeOnUtteranceProgressCallback(uuid);
       Log.i(TAG, "playSpeechAnnounce.onDone.run()");
-      onDone.run();
+      onDone.run(true);
     });
 
-    // Play the speech announce on the voice call stream
-    mSpeechService.playSpeech(speech, uuid);
+    String playSpeech = speech;
+    Runnable playTask = () -> {
+      mSpeechService.playSpeech(playSpeech, uuid);
+    };
+    if(!audioFocus) {
+      mSpeechService.requestAudioFocus(() -> {
+        playTask.run();
+      });
+    }
+    else {
+      playTask.run();
+    }
   }
 
-  protected void playAlertAnnounce(List<Alert> alerts, String type, int pos, int maxSpeech, int maxEarcons, Runnable onDone) {
-    Log.i(TAG, String.format("playAlertAnnounce %s pos %d", type, pos));
+  protected interface PlayAlertAnnounceOnDone {
+    void run(boolean audioFocus);
+  }
+
+  protected void playAlertAnnounce(
+    List<Alert> alerts, String type, int pos, boolean audioFocus, int maxSpeech, int maxEarcons, PlayAlertAnnounceOnDone onDone) {
+    Log.i(TAG, String.format("playAlertAnnounce %s pos %d %b", type, pos, audioFocus));
     if(pos == alerts.size()) {
       mHandler.postDelayed(() -> {
-        Log.i(TAG, "playAlertAnnounce.onDone.run()");
-        onDone.run();
+        Log.i(TAG, String.format("playAlertAnnounce.onDone.run() %b", audioFocus));
+        onDone.run(audioFocus);
       }, MESSAGE_TOKEN, 1);
       return;
     }
 
     // Play a sound for each alert
     Log.i(TAG, String.format("playEarconAnnounce() %s %d", type, pos));
-    playEarconAnnounce(alerts, pos, maxEarcons, () -> {
-      // Play a spech announce for the alert
+    playEarconAnnounce(alerts, pos, audioFocus, maxEarcons, (audioFocus2) -> {
+      // Play a speech announce for the alert
       mHandler.postDelayed(() -> {
         Log.i(TAG, String.format("playSpeechAnnounce() %s %d", type, pos));
-        playSpeechAnnounce(alerts, pos, maxSpeech, () -> {
+        playSpeechAnnounce(alerts, pos, audioFocus2, maxSpeech, (audioFocus3) -> {
           mHandler.postDelayed(() -> {
             // Announce the next alert
-            Log.i(TAG, String.format("playAlertAnnounce() %s %d", type, pos + 1));
-            playAlertAnnounce(alerts, type, pos + 1, maxSpeech, maxEarcons, onDone);
+            Log.i(TAG, String.format("playAlertAnnounce() %s %d %b", type, pos + 1, audioFocus3));
+            playAlertAnnounce(alerts, type, pos + 1, audioFocus3, maxSpeech, maxEarcons, onDone);
           }, MESSAGE_TOKEN, 1);
         });
       }, MESSAGE_TOKEN, 1);
@@ -513,23 +633,20 @@ public class AlertsAdapter extends RecyclerView.Adapter<AlertsAdapter.ViewHolder
         }
       }
       if(announces.size() != 0) {
-
-        // Request audio focus and duck current audio
-        Log.i(TAG, "requestAudioFocus()");
-        mSpeechService.requestAudioFocus(() -> {
-
-          // Announce the alerts
-          Log.i(TAG, "playAlertAnnounce() alert pos 0");
-          playAlertAnnounce(announces, "alert", 0, Configuration.DS1_ALERTS_MAX_SPEECH_ANNOUNCES, Configuration.DS1_ALERTS_MAX_EARCON_ANNOUNCES, () -> {
+        // Announce the alerts
+        Log.i(TAG, "playAlertAnnounce() alert pos 0");
+        playAlertAnnounce(
+          announces, "alert", 0, false, Configuration.DS1_ALERTS_MAX_SPEECH_ANNOUNCES, Configuration.DS1_ALERTS_MAX_EARCON_ANNOUNCES, (audioFocus) -> {
 
             // Abandon audio focus once done
-            Log.i(TAG, "abandonAudioFocus()");
-            mSpeechService.abandonAudioFocus(() -> {
-              Log.i(TAG, "setRadarAlerts.onDone.run()");
-              onDone.run();
-            });
+            if(audioFocus) {
+              Log.i(TAG, "abandonAudioFocus()");
+              mSpeechService.abandonAudioFocus(() -> {
+                Log.i(TAG, "setRadarAlerts.onDone.run()");
+                onDone.run();
+              });
+            }
           });
-        });
       }
     }
     else {
@@ -571,22 +688,20 @@ public class AlertsAdapter extends RecyclerView.Adapter<AlertsAdapter.ViewHolder
         mHandler.removeCallbacks(mReportsReminderTask);
         mHandler.postDelayed(mReportsReminderTask, MESSAGE_TOKEN, Configuration.REPORTS_REMINDER_TIMER);
 
-        // Request audio focus and duck current audio
-        Log.i(TAG, "requestAudioFocus()");
-        mSpeechService.requestAudioFocus(() -> {
-
-          // Announce the reports
-          Log.i(TAG, "playAlertAnnounce() report pos 0");
-          playAlertAnnounce(announces, "report", 0, Configuration.REPORTS_MAX_SPEECH_ANNOUNCES, Configuration.REPORTS_MAX_EARCON_ANNOUNCES, () -> {
+        // Announce the reports
+        Log.i(TAG, "playAlertAnnounce() report pos 0");
+        playAlertAnnounce(
+          announces, "report", 0, false, Configuration.REPORTS_MAX_SPEECH_ANNOUNCES, Configuration.REPORTS_MAX_EARCON_ANNOUNCES, (audioFocus) -> {
 
             // Abandon audio focus once done
-            Log.i(TAG, "abandonAudioFocus()");
-            mSpeechService.abandonAudioFocus(() -> {
-              Log.i(TAG, "setReportAlerts.onDone.run()");
-              onDone.run();
-            });
+            if(audioFocus) {
+              Log.i(TAG, "abandonAudioFocus()");
+              mSpeechService.abandonAudioFocus(() -> {
+                Log.i(TAG, "setReportAlerts.onDone.run()");
+                onDone.run();
+              });
+            }
           });
-        });
       }
     }
     else {
@@ -628,22 +743,20 @@ public class AlertsAdapter extends RecyclerView.Adapter<AlertsAdapter.ViewHolder
         mHandler.removeCallbacks(mAircraftsReminderTask);
         mHandler.postDelayed(mAircraftsReminderTask, MESSAGE_TOKEN, Configuration.AIRCRAFTS_REMINDER_TIMER);
 
-        // Request audio focus and duck current audio
-        Log.i(TAG, "requestAudioFocus()");
-        mSpeechService.requestAudioFocus(() -> {
-
-          // Announce the aircrafts
-          Log.i(TAG, "playAlertAnnounce() aircraft pos 0");
-          playAlertAnnounce(announces, "aircraft", 0, Configuration.AIRCRAFTS_MAX_SPEECH_ANNOUNCES, Configuration.AIRCRAFTS_MAX_EARCON_ANNOUNCES, () -> {
+        // Announce the aircrafts
+        Log.i(TAG, "playAlertAnnounce() aircraft pos 0");
+        playAlertAnnounce(
+          announces, "aircraft", 0, false, Configuration.AIRCRAFTS_MAX_SPEECH_ANNOUNCES, Configuration.AIRCRAFTS_MAX_EARCON_ANNOUNCES, (audioFocus) -> {
 
             // Abandon audio focus once done
-            Log.i(TAG, "abandonAudioFocus()");
-            mSpeechService.abandonAudioFocus(() -> {
-              Log.i(TAG, "setReportAlerts.onDone.run()");
-              onDone.run();
-            });
+            if(audioFocus) {
+              Log.i(TAG, "abandonAudioFocus()");
+              mSpeechService.abandonAudioFocus(() -> {
+                Log.i(TAG, "setReportAlerts.onDone.run()");
+                onDone.run();
+              });
+            }
           });
-        });
       }
     }
     else {

@@ -23,6 +23,7 @@ package com.jsd.x761.nexus;
 public class Configuration {
 
   public static final boolean DEBUG = false;
+  public static final boolean DEMO = true;
   public static final long SPLASH_TIMER = 2000;
   public static final String DS1_SERVICE_SCAN_NAME = "DS1@E1";
   public static final long DS1_SERVICE_CONNECT_WAIT_TIMER = 5000;
@@ -76,12 +77,14 @@ public class Configuration {
   public static final boolean DEBUG_ANNOUNCE_VEHICLE_BEARING = false;
   public static final int DEBUG_INJECT_TEST_REPORTS = DEBUG ? 1 : 0;
   public static final long DEBUG_TEST_REPORTS_TIMER = DEBUG ? 40000 : 0;
-  public static final float REPORTS_MAX_DISTANCE = DEBUG ? 50.0f : 2.0f;
+  public static final float REPORTS_MAX_DISTANCE = DEBUG ? 50.0f : DEMO ? 15.0f : 2.0f;
+  public static final float DEMO_REPORTS_MAX_ANNOUNCED_DISTANCE = 2.0f;
   public static final long REPORTS_REMINDER_TIMER = 60000;
   public static final float REPORTS_REMINDER_DISTANCE = 0.25f;
   public static final int REPORTS_REMINDER_BEARING = 3;
   public static final int REPORTS_MAX_SPEECH_ANNOUNCES = 3;
   public static final int REPORTS_MAX_EARCON_ANNOUNCES = 1;
+  public static final boolean REPORTS_EARCON_REMINDER = false;
 
   public static final String DEBUG_TEST_REPORTS = DEBUG_INJECT_TEST_REPORTS != 0 ? """
       {
@@ -170,14 +173,16 @@ public class Configuration {
       }
     """ : "";
 
-  public static final int DEBUG_INJECT_TEST_AIRCRAFTS = DEBUG ? 1 : 0;
-  public static final long DEBUG_TEST_AIRCRAFTS_TIMER = DEBUG ? 40000 : 0;
-  public static final float AIRCRAFTS_MAX_DISTANCE = DEBUG ? 50.0f : 5.0f;
+  public static final int DEBUG_INJECT_TEST_AIRCRAFTS = DEBUG ? 1 : DEMO ? 1 : 0;
+  public static final long DEBUG_TEST_AIRCRAFTS_TIMER = DEBUG ? 40000 : DEMO ? 40000 : 0;
+  public static final float AIRCRAFTS_MAX_DISTANCE = DEBUG ? 50.0f : DEMO ? 50.0f : 5.0f;
+  public static final float DEMO_AIRCRAFTS_MAX_ANNOUNCED_DISTANCE = 5.0f;
   public static final long AIRCRAFTS_REMINDER_TIMER = 60000;
   public static final float AIRCRAFTS_REMINDER_DISTANCE = 1.0f;
   public static final float AIRCRAFTS_REMINDER_BEARING = 3;
   public static final int AIRCRAFTS_MAX_SPEECH_ANNOUNCES = 3;
   public static final int AIRCRAFTS_MAX_EARCON_ANNOUNCES = 1;
+  public static final boolean AIRCRAFTS_EARCON_REMINDER = false;
 
   // The following test transponder icao24 addresses correspond to interesting
   // aircrafts in the aircrafts database
